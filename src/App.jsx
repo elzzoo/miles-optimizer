@@ -1,9 +1,8 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 
 // ─── DATE HELPERS (module level) ─────────────────────────────
 const today = new Date();
 const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split("T")[0]; };
-const TP_TOKEN = "37a6fa21cea6bb6da41bb247e06b6bf2";
 
 // ─── EXCHANGE RATES ───────────────────────────────────────────
 const USD_XOF = 568;
@@ -900,9 +899,7 @@ export default function App() {
   const [retDate, setRetDate] = useState(addDays(today, 40));
   const [cabin, setCabin] = useState(1); // 0=eco 1=business
   const [searched, setSearched] = useState(true);
-  const [flightData, setFlightData] = useState(null);
-  const [flightLoading, setFlightLoading] = useState(false);
-  const [flightError, setFlightError] = useState(null);
+  const [foundPrice, setFoundPrice] = useState("");
 
   const origA = AIRPORTS.find((a) => a.code === origin);
   const destA = AIRPORTS.find((a) => a.code === dest);
@@ -926,47 +923,34 @@ export default function App() {
     });
   }, [origin, dest, cabin, distMiles]);
 
-  const [cashEcoEst, cashBusEst] = useMemo(() => estimateCash(distMiles), [distMiles]);
-  const realEcoUSD = flightData && flightData.length > 0 ? flightData[0].price : null;
-  const realBusUSD = realEcoUSD ? Math.round(realEcoUSD * 3.5) : null;
-  const cashEco = realEcoUSD ?? cashEcoEst;
-  const cashBus = realBusUSD ?? cashBusEst;
-  const cashUSD = cabin === 1 ? cashBus : cashEco;
-  const isRealPrice = !!realEcoUSD;
+  const [cashEco, cashBus] = useMemo(() => estimateCash(distMiles), [distMiles]);
+  const userPrice = foundPrice ? parseFloat(foundPrice) : null;
+  const cashUSD = userPrice ?? (cabin === 1 ? cashBus : cashEco);
+  const isUserPrice = !!userPrice;
 
   const activePromos = PROGRAMS.filter(
     (p) => p.promoStatus === "active" || p.promoStatus === "expiring"
   );
 
-  const searchFlights = useCallback(async () => {
-    if (!origin || !dest || origin === dest || !depDate) return;
-    setFlightLoading(true);
-    setFlightError(null);
-    setFlightData(null);
-    setSearched(true);
-    try {
-      const url = `https://api.travelpayouts.com/aviasales/v3/prices_for_period?origin=${origin}&destination=${dest}&departure_at=${depDate}&return_at=${retDate}&currency=usd&token=${TP_TOKEN}&limit=10&sorting=price`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.success && json.data && json.data.length > 0) {
-        setFlightData(json.data);
-      } else {
-        const url2 = `https://api.travelpayouts.com/aviasales/v3/prices_for_period?origin=${origin}&destination=${dest}&departure_at=${depDate.slice(0,7)}&currency=usd&token=${TP_TOKEN}&limit=10&sorting=price`;
-        const res2 = await fetch(url2);
-        const json2 = await res2.json();
-        setFlightData(json2.success && json2.data ? json2.data : []);
-      }
-    } catch {
-      setFlightError("Erreur de connexion à l'API de recherche.");
-    } finally {
-      setFlightLoading(false);
-    }
-  }, [origin, dest, depDate, retDate]);
+  const handleSearch = () => {
+    if (origin && dest && origin !== dest) setSearched(true);
+  };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { searchFlights(); }, []);
+  const skyscannerUrl = useMemo(() => {
+    if (!origin || !dest || !depDate) return "#";
+    const dep = depDate.replace(/-/g, "").slice(2); // YYMMDD
+    const ret = retDate ? retDate.replace(/-/g, "").slice(2) : "";
+    const cabin_sk = cabin === 1 ? "business" : "economy";
+    const base = `https://www.skyscanner.fr/transport/vols/${origin.toLowerCase()}/${dest.toLowerCase()}/${dep}`;
+    return ret ? `${base}/${ret}/?adults=1&cabinclass=${cabin_sk}` : `${base}/?adults=1&cabinclass=${cabin_sk}`;
+  }, [origin, dest, depDate, retDate, cabin]);
 
-  const handleSearch = () => searchFlights();
+  const googleFlightsUrl = useMemo(() => {
+    if (!origin || !dest || !depDate) return "#";
+    const cabinCode = cabin === 1 ? "b" : "e";
+    const ret = retDate ? `*${dest}.${origin}.${retDate}` : "";
+    return `https://www.google.com/flights?hl=fr#flt=${origin}.${dest}.${depDate}${ret};c:USD;e:1;sd:1;t:${cabinCode}`;
+  }, [origin, dest, depDate, retDate, cabin]);
 
   return (
     <div
@@ -1076,10 +1060,10 @@ export default function App() {
           {/* CTA */}
           <button
             onClick={handleSearch}
-            disabled={!origin || !dest || origin === dest || flightLoading}
+            disabled={!origin || !dest || origin === dest}
             className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-base transition-all shadow-lg shadow-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {flightLoading ? "✈️ Recherche en cours..." : "🔍 Comparer les programmes"}
+            🔍 Comparer les programmes
           </button>
         </div>
 
@@ -1099,75 +1083,61 @@ export default function App() {
               </div>
             </div>
 
-            {/* Loading state */}
-            {flightLoading && (
-              <div className="text-center py-6">
-                <div className="text-4xl mb-2" style={{animation:"spin 1s linear infinite", display:"inline-block"}}>✈️</div>
-                <p className="text-indigo-300 text-sm">Recherche des vols disponibles...</p>
+            {/* Real-time search engines */}
+            <div className="rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 p-4 mb-4">
+              <p className="text-white font-bold text-sm mb-1">🔎 Recherche en temps réel</p>
+              <p className="text-indigo-300 text-xs mb-3">Cliquez pour voir les vrais prix disponibles</p>
+              <div className="flex gap-3">
+                <a
+                  href={skyscannerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm transition-colors"
+                >
+                  ✈️ Skyscanner
+                </a>
+                <a
+                  href={googleFlightsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors"
+                >
+                  🔵 Google Flights
+                </a>
               </div>
-            )}
+            </div>
 
-            {/* Error state */}
-            {flightError && (
-              <div className="bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30 rounded-2xl px-4 py-3 mb-4 text-red-300 text-sm">
-                ⚠️ {flightError}
+            {/* User price input */}
+            <div className="rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 px-4 py-3 mb-4">
+              <p className="text-white font-bold text-sm mb-1">💡 Prix trouvé ?</p>
+              <p className="text-indigo-300 text-xs mb-2">Entrez le prix cash vu sur Skyscanner / Google Flights pour une comparaison exacte avec les miles</p>
+              <div className="flex items-center gap-2">
+                <span className="text-indigo-300 font-bold">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder={`ex: ${cabin === 1 ? cashBus : cashEco}`}
+                  value={foundPrice}
+                  onChange={(e) => setFoundPrice(e.target.value)}
+                  className="flex-1 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl px-3 py-2 text-white text-sm placeholder-indigo-400 outline-none focus:border-indigo-400"
+                />
+                {foundPrice && (
+                  <button
+                    onClick={() => setFoundPrice("")}
+                    className="text-indigo-400 hover:text-white text-sm px-2"
+                  >✕</button>
+                )}
               </div>
-            )}
-
-            {/* Real flights found */}
-            {flightData && flightData.length > 0 && (
-              <div className="bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl p-4 mb-4">
-                <p className="text-white font-bold text-sm mb-3">✈️ Vols trouvés — {flightData.length} option(s)</p>
-                <div className="space-y-2">
-                  {flightData.slice(0, 4).map((f, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-white border-opacity-10 last:border-0">
-                      <div>
-                        <span className="text-white font-bold text-sm">{f.airline} {f.flight_number || ""}</span>
-                        <span className="text-indigo-300 text-xs ml-2">
-                          {f.transfers === 0 ? "✅ Direct" : `${f.transfers} escale(s)`}
-                        </span>
-                        {f.departure_at && (
-                          <div className="text-indigo-400 text-xs">{String(f.departure_at).slice(0,10)}</div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-white font-black">{fmt.usd(f.price)}</div>
-                        <div className="text-indigo-300 text-xs">{fmt.xof(f.price * USD_XOF)}</div>
-                        {f.link && (
-                          <a
-                            href={`https://www.aviasales.com${f.link}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-indigo-400 text-xs underline"
-                          >
-                            Voir →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* No flights found */}
-            {flightData && flightData.length === 0 && !flightLoading && (
-              <div className="bg-white bg-opacity-5 border border-white border-opacity-10 rounded-2xl px-4 py-3 mb-4 text-indigo-300 text-sm text-center">
-                Aucun vol trouvé pour ces dates. Les prix ci-dessous sont des estimations.
-              </div>
-            )}
+            </div>
 
             {/* Cash comparison bar */}
             <div className="flex items-center justify-between bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl px-4 py-3 mb-4">
               <div>
                 <p className="text-white font-bold text-sm">
-                  {isRealPrice ? "💵 Prix cash le moins cher" : "💵 Billet cash (estimation)"}
+                  {isUserPrice ? "💵 Prix cash saisi" : "💵 Prix cash (estimation)"}
                 </p>
                 <p className="text-indigo-300 text-xs">
-                  {cabin === 1
-                    ? isRealPrice ? "Business estimé depuis l'économie ×3.5" : "A/R Business — prix indicatif"
-                    : isRealPrice ? "Économie — source: Travelpayouts" : "A/R Économie — prix indicatif"
-                  }
+                  {isUserPrice ? "Votre prix trouvé sur Skyscanner/Google" : `A/R ${cabin === 1 ? "Business" : "Économie"} — prix indicatif`}
                 </p>
               </div>
               <div className="text-right">
@@ -1216,7 +1186,7 @@ export default function App() {
             <div className="mt-5 rounded-2xl bg-white bg-opacity-5 border border-white border-opacity-10 p-4 text-indigo-300 text-xs leading-relaxed">
               <p className="font-bold mb-1">⚠️ Informations importantes</p>
               <p>
-                Les prix des billets sont fournis par Travelpayouts (données Aviasales) et peuvent varier. Les coûts en miles sont calculés selon les barèmes officiels de <strong>mars 2026</strong>. Vérifiez toujours le prix exact et la disponibilité sur le site officiel du programme avant d'acheter des miles.
+                Les prix cash sont indicatifs — utilisez Skyscanner ou Google Flights pour les vrais prix. Les coûts en miles sont calculés selon les barèmes officiels de <strong>mars 2026</strong>. Vérifiez toujours la disponibilité et le prix exact sur le site officiel du programme avant d'acheter des miles.
               </p>
             </div>
           </>

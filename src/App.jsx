@@ -1,5 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 
+// ─── DATE HELPERS (module level) ─────────────────────────────
+const today = new Date();
+const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split("T")[0]; };
+
 // ─── EXCHANGE RATES ───────────────────────────────────────────
 const USD_XOF = 568;
 const USD_EUR = 0.92;
@@ -350,8 +354,7 @@ const PROGRAMS = [
     stdPrice: 0.025,
     taxUSD: 10,
     lowTax: true,
-    notes: "Taxes quasi nulles (~10$) sur Turkish. Idéal pour réserver le vol direct DSS–IST.",
-    route: "Turkish direct DSS–IST",
+    notes: "Taxes quasi nulles (~10$). Idéal pour les vols Turkish Airlines (Star Alliance).",
     chartType: "distance",
   },
   {
@@ -372,8 +375,7 @@ const PROGRAMS = [
     nextExpected: "~Avril 2026",
     taxUSD: 60,
     lowTax: true,
-    notes: "Meilleur taux si promo active (160%). Promos toutes les 4–6 semaines environ.",
-    route: "Turkish direct DSS–IST",
+    notes: "Taxes modérées. Bon rapport qualité/prix sur les vols Star Alliance.",
     chartType: "zone",
   },
   {
@@ -391,8 +393,7 @@ const PROGRAMS = [
     stdPrice: 0.028,
     taxUSD: 400,
     lowTax: false,
-    notes: "Prix dynamique (variable). Taxes élevées (~400$) sur Air France business. Via Paris CDG.",
-    route: "Air France DSS–CDG–IST",
+    notes: "Programme Air France/KLM. Bon pour les destinations desservies par AF/KLM.",
     chartType: "zone",
   },
   {
@@ -410,8 +411,7 @@ const PROGRAMS = [
     stdPrice: 0.035,
     taxUSD: 50,
     lowTax: true,
-    notes: "Promo expire DEMAIN. Agis vite si tu veux ce tarif.",
-    route: "Turkish direct DSS–IST",
+    notes: "Promo expire bientôt. Idéal pour vols United et Star Alliance.",
     chartType: "zone",
   },
   {
@@ -429,8 +429,7 @@ const PROGRAMS = [
     stdPrice: 0.03,
     taxUSD: 217,
     lowTax: false,
-    notes: "Programme propre Turkish. Attendre une promo (~100% bonus) pour réduire le coût.",
-    route: "Turkish direct DSS–IST",
+    notes: "Programme Turkish Airlines. Attendre une promo (~100% bonus) pour réduire le coût.",
     chartType: "zone",
   },
   {
@@ -451,8 +450,7 @@ const PROGRAMS = [
     nextExpected: "~Fin mai 2026",
     taxUSD: 80,
     lowTax: true,
-    notes: "Excellent si promo active. Vol Qatar DSS–DOH–IST (1 escale à Doha).",
-    route: "Qatar Airways DSS–DOH–IST",
+    notes: "Excellent si promo active. Fonctionne sur les vols Qatar Airways (1 escale possible à Doha).",
     chartType: "zone",
   },
 ];
@@ -656,7 +654,7 @@ function calcResult(program, milesOW, cabin) {
 
 function daysLeft(expiry) {
   if (!expiry) return null;
-  const now = new Date("2026-03-29");
+  const now = new Date();
   const exp = new Date(expiry);
   return Math.max(0, Math.ceil((exp - now) / 86400000));
 }
@@ -784,7 +782,7 @@ function PromoBadge({ status, label, expiry }) {
 }
 
 // ─── RESULT CARD ──────────────────────────────────────────────
-function ResultCard({ program, result, rank, cabin }) {
+function ResultCard({ program, result, rank, cabin, origin, dest }) {
   const [expanded, setExpanded] = useState(rank === 0);
 
   const rankStyle = {
@@ -816,7 +814,7 @@ function ResultCard({ program, result, rank, cabin }) {
                   {program.alliance}
                 </span>
                 <span className="text-gray-300">·</span>
-                <span className="text-xs text-gray-400">{program.route}</span>
+                <span className="text-xs text-gray-400">{origin} → {dest}</span>
               </div>
             </div>
           </div>
@@ -897,10 +895,10 @@ function ResultCard({ program, result, rank, cabin }) {
 export default function App() {
   const [origin, setOrigin] = useState("DSS");
   const [dest, setDest] = useState("IST");
-  const [depDate, setDepDate] = useState("2026-05-01");
-  const [retDate, setRetDate] = useState("2026-05-10");
+  const [depDate, setDepDate] = useState(addDays(today, 30));
+  const [retDate, setRetDate] = useState(addDays(today, 40));
   const [cabin, setCabin] = useState(1); // 0=eco 1=business
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(true);
 
   const origA = AIRPORTS.find((a) => a.code === origin);
   const destA = AIRPORTS.find((a) => a.code === dest);
@@ -1108,6 +1106,8 @@ export default function App() {
                   result={result}
                   rank={i}
                   cabin={cabin}
+                  origin={origin}
+                  dest={dest}
                 />
               ))}
             </div>

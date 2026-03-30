@@ -1,8 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 
 // ─── DATE HELPERS (module level) ─────────────────────────────
 const today = new Date();
 const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split("T")[0]; };
+const TP_TOKEN = "37a6fa21cea6bb6da41bb247e06b6bf2";
 
 // ─── EXCHANGE RATES ───────────────────────────────────────────
 const USD_XOF = 568;
@@ -899,6 +900,9 @@ export default function App() {
   const [retDate, setRetDate] = useState(addDays(today, 40));
   const [cabin, setCabin] = useState(1); // 0=eco 1=business
   const [searched, setSearched] = useState(true);
+  const [flightData, setFlightData] = useState(null);
+  const [flightLoading, setFlightLoading] = useState(false);
+  const [flightError, setFlightError] = useState(null);
 
   const origA = AIRPORTS.find((a) => a.code === origin);
   const destA = AIRPORTS.find((a) => a.code === dest);
@@ -922,16 +926,47 @@ export default function App() {
     });
   }, [origin, dest, cabin, distMiles]);
 
-  const [cashEco, cashBus] = useMemo(() => estimateCash(distMiles), [distMiles]);
+  const [cashEcoEst, cashBusEst] = useMemo(() => estimateCash(distMiles), [distMiles]);
+  const realEcoUSD = flightData && flightData.length > 0 ? flightData[0].price : null;
+  const realBusUSD = realEcoUSD ? Math.round(realEcoUSD * 3.5) : null;
+  const cashEco = realEcoUSD ?? cashEcoEst;
+  const cashBus = realBusUSD ?? cashBusEst;
   const cashUSD = cabin === 1 ? cashBus : cashEco;
+  const isRealPrice = !!realEcoUSD;
 
   const activePromos = PROGRAMS.filter(
     (p) => p.promoStatus === "active" || p.promoStatus === "expiring"
   );
 
-  const handleSearch = () => {
-    if (origin && dest && origin !== dest) setSearched(true);
-  };
+  const searchFlights = useCallback(async () => {
+    if (!origin || !dest || origin === dest || !depDate) return;
+    setFlightLoading(true);
+    setFlightError(null);
+    setFlightData(null);
+    setSearched(true);
+    try {
+      const url = `https://api.travelpayouts.com/aviasales/v3/prices_for_period?origin=${origin}&destination=${dest}&departure_at=${depDate}&return_at=${retDate}&currency=usd&token=${TP_TOKEN}&limit=10&sorting=price`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (json.success && json.data && json.data.length > 0) {
+        setFlightData(json.data);
+      } else {
+        const url2 = `https://api.travelpayouts.com/aviasales/v3/prices_for_period?origin=${origin}&destination=${dest}&departure_at=${depDate.slice(0,7)}&currency=usd&token=${TP_TOKEN}&limit=10&sorting=price`;
+        const res2 = await fetch(url2);
+        const json2 = await res2.json();
+        setFlightData(json2.success && json2.data ? json2.data : []);
+      }
+    } catch {
+      setFlightError("Erreur de connexion à l'API de recherche.");
+    } finally {
+      setFlightLoading(false);
+    }
+  }, [origin, dest, depDate, retDate]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { searchFlights(); }, []);
+
+  const handleSearch = () => searchFlights();
 
   return (
     <div
@@ -987,7 +1022,7 @@ export default function App() {
           <div className="flex items-end gap-2 mb-4">
             <AirportPicker label="Départ" value={origin} onChange={setOrigin} exclude={dest} />
             <button
-              onClick={() => { setOrigin(dest); setDest(origin); setSearched(false); }}
+              onClick={() => { setOrigin(dest); setDest(origin); }}
               className="mb-1 w-10 h-10 rounded-full bg-gray-100 hover:bg-indigo-100 text-gray-500 flex items-center justify-center text-lg transition-colors flex-shrink-0"
               title="Inverser"
             >
@@ -1025,7 +1060,7 @@ export default function App() {
               {[{ val: 1, icon: "💼", label: "Business" }, { val: 0, icon: "🪑", label: "Économie" }].map(({ val, icon, label }) => (
                 <button
                   key={val}
-                  onClick={() => { setCabin(val); setSearched(false); }}
+                  onClick={() => setCabin(val)}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all ${
                     cabin === val
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
@@ -1041,10 +1076,10 @@ export default function App() {
           {/* CTA */}
           <button
             onClick={handleSearch}
-            disabled={!origin || !dest || origin === dest}
+            disabled={!origin || !dest || origin === dest || flightLoading}
             className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-base transition-all shadow-lg shadow-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            🔍 Comparer les programmes
+            {flightLoading ? "✈️ Recherche en cours..." : "🔍 Comparer les programmes"}
           </button>
         </div>
 
@@ -1064,11 +1099,76 @@ export default function App() {
               </div>
             </div>
 
+            {/* Loading state */}
+            {flightLoading && (
+              <div className="text-center py-6">
+                <div className="text-4xl mb-2" style={{animation:"spin 1s linear infinite", display:"inline-block"}}>✈️</div>
+                <p className="text-indigo-300 text-sm">Recherche des vols disponibles...</p>
+              </div>
+            )}
+
+            {/* Error state */}
+            {flightError && (
+              <div className="bg-red-500 bg-opacity-20 border border-red-400 border-opacity-30 rounded-2xl px-4 py-3 mb-4 text-red-300 text-sm">
+                ⚠️ {flightError}
+              </div>
+            )}
+
+            {/* Real flights found */}
+            {flightData && flightData.length > 0 && (
+              <div className="bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl p-4 mb-4">
+                <p className="text-white font-bold text-sm mb-3">✈️ Vols trouvés — {flightData.length} option(s)</p>
+                <div className="space-y-2">
+                  {flightData.slice(0, 4).map((f, i) => (
+                    <div key={i} className="flex items-center justify-between py-2 border-b border-white border-opacity-10 last:border-0">
+                      <div>
+                        <span className="text-white font-bold text-sm">{f.airline} {f.flight_number || ""}</span>
+                        <span className="text-indigo-300 text-xs ml-2">
+                          {f.transfers === 0 ? "✅ Direct" : `${f.transfers} escale(s)`}
+                        </span>
+                        {f.departure_at && (
+                          <div className="text-indigo-400 text-xs">{String(f.departure_at).slice(0,10)}</div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-white font-black">{fmt.usd(f.price)}</div>
+                        <div className="text-indigo-300 text-xs">{fmt.xof(f.price * USD_XOF)}</div>
+                        {f.link && (
+                          <a
+                            href={`https://www.aviasales.com${f.link}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-indigo-400 text-xs underline"
+                          >
+                            Voir →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No flights found */}
+            {flightData && flightData.length === 0 && !flightLoading && (
+              <div className="bg-white bg-opacity-5 border border-white border-opacity-10 rounded-2xl px-4 py-3 mb-4 text-indigo-300 text-sm text-center">
+                Aucun vol trouvé pour ces dates. Les prix ci-dessous sont des estimations.
+              </div>
+            )}
+
             {/* Cash comparison bar */}
             <div className="flex items-center justify-between bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl px-4 py-3 mb-4">
               <div>
-                <p className="text-white font-bold text-sm">💵 Billet cash marché (estimation)</p>
-                <p className="text-indigo-300 text-xs">A/R {cabin === 1 ? "Business" : "Économie"} — prix indicatif</p>
+                <p className="text-white font-bold text-sm">
+                  {isRealPrice ? "💵 Prix cash le moins cher" : "💵 Billet cash (estimation)"}
+                </p>
+                <p className="text-indigo-300 text-xs">
+                  {cabin === 1
+                    ? isRealPrice ? "Business estimé depuis l'économie ×3.5" : "A/R Business — prix indicatif"
+                    : isRealPrice ? "Économie — source: Travelpayouts" : "A/R Économie — prix indicatif"
+                  }
+                </p>
               </div>
               <div className="text-right">
                 <div className="text-white font-black text-lg">{fmt.xof(cashUSD * USD_XOF)}</div>
@@ -1116,10 +1216,7 @@ export default function App() {
             <div className="mt-5 rounded-2xl bg-white bg-opacity-5 border border-white border-opacity-10 p-4 text-indigo-300 text-xs leading-relaxed">
               <p className="font-bold mb-1">⚠️ Informations importantes</p>
               <p>
-                Ces estimations sont basées sur les barèmes de <strong>mars 2026</strong> et les promos
-                connues à cette date. Les prix des miles et la disponibilité des sièges primes
-                changent en permanence. Vérifiez toujours le prix exact et la disponibilité sur
-                le site officiel du programme avant d'acheter des miles.
+                Les prix des billets sont fournis par Travelpayouts (données Aviasales) et peuvent varier. Les coûts en miles sont calculés selon les barèmes officiels de <strong>mars 2026</strong>. Vérifiez toujours le prix exact et la disponibilité sur le site officiel du programme avant d'acheter des miles.
               </p>
             </div>
           </>

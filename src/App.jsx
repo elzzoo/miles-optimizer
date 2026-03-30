@@ -4,6 +4,70 @@ import { useState, useMemo, useRef, useEffect } from "react";
 const today = new Date();
 const addDays = (d, n) => { const r = new Date(d); r.setDate(r.getDate()+n); return r.toISOString().split("T")[0]; };
 
+// ─── API KEYS ─────────────────────────────────────────────────
+const SERPAPI_KEY = "e7bffc5ecd6f2cdea398e0dfd1489e4d8c8dac14636bb82f17d9434950567cab";
+const RAPIDAPI_KEY = "7a33df2553msh195ddaf40ee376ep180429jsn506b3d5c2fcf";
+const RAPIDAPI_HOST = "sky-scrapper.p.rapidapi.com";
+
+// ─── GOOGLE FLIGHTS via SerpAPI ───────────────────────────────
+async function fetchGoogleFlights(origin, dest, depDate, retDate, cabin) {
+  const travelClass = cabin === 1 ? 3 : 1; // 1=economy, 3=business
+  const params = new URLSearchParams({
+    engine: "google_flights",
+    departure_id: origin,
+    arrival_id: dest,
+    outbound_date: depDate,
+    currency: "USD",
+    hl: "fr",
+    travel_class: travelClass,
+    api_key: SERPAPI_KEY,
+  });
+  if (retDate) params.set("return_date", retDate);
+  const res = await fetch(`https://serpapi.com/search.json?${params}`);
+  if (!res.ok) throw new Error(`Google Flights: ${res.status}`);
+  return res.json();
+}
+
+// ─── SKYSCANNER via RapidAPI Sky Scrapper ─────────────────────
+const RH = { "x-rapidapi-key": RAPIDAPI_KEY, "x-rapidapi-host": RAPIDAPI_HOST };
+
+async function getEntityId(iata) {
+  const res = await fetch(
+    `https://${RAPIDAPI_HOST}/api/v1/flights/searchAirport?query=${iata}&locale=en-US`,
+    { headers: RH }
+  );
+  const json = await res.json();
+  const match = json.data?.find(
+    (a) => a.navigation?.relevantFlightParams?.skyId === iata
+  );
+  return match?.navigation?.relevantFlightParams || null;
+}
+
+async function fetchSkyscanner(origin, dest, depDate, retDate, cabin) {
+  const [origE, destE] = await Promise.all([getEntityId(origin), getEntityId(dest)]);
+  if (!origE || !destE) throw new Error("Aéroport non trouvé");
+  const cabinClass = cabin === 1 ? "business" : "economy";
+  const params = new URLSearchParams({
+    originSkyId: origE.skyId,
+    destinationSkyId: destE.skyId,
+    originEntityId: origE.entityId,
+    destinationEntityId: destE.entityId,
+    date: depDate,
+    cabinClass,
+    adults: "1",
+    currency: "USD",
+    market: "FR",
+    locale: "fr-FR",
+  });
+  if (retDate) params.set("returnDate", retDate);
+  const res = await fetch(
+    `https://${RAPIDAPI_HOST}/api/v2/flights/searchFlights?${params}`,
+    { headers: RH }
+  );
+  if (!res.ok) throw new Error(`Skyscanner: ${res.status}`);
+  return res.json();
+}
+
 // ─── EXCHANGE RATES ───────────────────────────────────────────
 const USD_XOF = 568;
 const USD_EUR = 0.92;
@@ -899,7 +963,11 @@ export default function App() {
   const [retDate, setRetDate] = useState(addDays(today, 40));
   const [cabin, setCabin] = useState(1); // 0=eco 1=business
   const [searched, setSearched] = useState(true);
-  const [foundPrice, setFoundPrice] = useState("");
+  const [googleResults, setGoogleResults] = useState(null);
+  const [skyResults, setSkyResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [googleError, setGoogleError] = useState(null);
+  const [skyError, setSkyError] = useState(null);
 
   const origA = AIRPORTS.find((a) => a.code === origin);
   const destA = AIRPORTS.find((a) => a.code === dest);
@@ -924,33 +992,48 @@ export default function App() {
   }, [origin, dest, cabin, distMiles]);
 
   const [cashEco, cashBus] = useMemo(() => estimateCash(distMiles), [distMiles]);
-  const userPrice = foundPrice ? parseFloat(foundPrice) : null;
-  const cashUSD = userPrice ?? (cabin === 1 ? cashBus : cashEco);
-  const isUserPrice = !!userPrice;
+
+  const bestGooglePrice = useMemo(() => {
+    const all = [...(googleResults?.best_flights || []), ...(googleResults?.other_flights || [])];
+    return all.length > 0 ? Math.min(...all.map(f => f.price).filter(Boolean)) : null;
+  }, [googleResults]);
+
+  const bestSkyPrice = useMemo(() => {
+    const its = skyResults?.data?.itineraries || [];
+    return its.length > 0 ? Math.min(...its.map(it => it.price?.raw).filter(Boolean)) : null;
+  }, [skyResults]);
+
+  const bestRealPrice = bestGooglePrice && bestSkyPrice
+    ? Math.min(bestGooglePrice, bestSkyPrice)
+    : bestGooglePrice ?? bestSkyPrice ?? null;
+
+  const cashUSD = bestRealPrice ?? (cabin === 1 ? cashBus : cashEco);
+  const isRealPrice = !!bestRealPrice;
 
   const activePromos = PROGRAMS.filter(
     (p) => p.promoStatus === "active" || p.promoStatus === "expiring"
   );
 
-  const handleSearch = () => {
-    if (origin && dest && origin !== dest) setSearched(true);
+  const handleSearch = async () => {
+    if (!origin || !dest || origin === dest) return;
+    setSearched(true);
+    setSearchLoading(true);
+    setGoogleResults(null);
+    setSkyResults(null);
+    setGoogleError(null);
+    setSkyError(null);
+
+    await Promise.allSettled([
+      fetchGoogleFlights(origin, dest, depDate, retDate, cabin)
+        .then(setGoogleResults)
+        .catch(e => setGoogleError(e.message)),
+      fetchSkyscanner(origin, dest, depDate, retDate, cabin)
+        .then(setSkyResults)
+        .catch(e => setSkyError(e.message)),
+    ]);
+
+    setSearchLoading(false);
   };
-
-  const skyscannerUrl = useMemo(() => {
-    if (!origin || !dest || !depDate) return "#";
-    const dep = depDate.replace(/-/g, "").slice(2); // YYMMDD
-    const ret = retDate ? retDate.replace(/-/g, "").slice(2) : "";
-    const cabin_sk = cabin === 1 ? "business" : "economy";
-    const base = `https://www.skyscanner.fr/transport/vols/${origin.toLowerCase()}/${dest.toLowerCase()}/${dep}`;
-    return ret ? `${base}/${ret}/?adults=1&cabinclass=${cabin_sk}` : `${base}/?adults=1&cabinclass=${cabin_sk}`;
-  }, [origin, dest, depDate, retDate, cabin]);
-
-  const googleFlightsUrl = useMemo(() => {
-    if (!origin || !dest || !depDate) return "#";
-    const cabinCode = cabin === 1 ? "b" : "e";
-    const ret = retDate ? `*${dest}.${origin}.${retDate}` : "";
-    return `https://www.google.com/flights?hl=fr#flt=${origin}.${dest}.${depDate}${ret};c:USD;e:1;sd:1;t:${cabinCode}`;
-  }, [origin, dest, depDate, retDate, cabin]);
 
   return (
     <div
@@ -1060,10 +1143,10 @@ export default function App() {
           {/* CTA */}
           <button
             onClick={handleSearch}
-            disabled={!origin || !dest || origin === dest}
+            disabled={!origin || !dest || origin === dest || searchLoading}
             className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-base transition-all shadow-lg shadow-indigo-200 disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            🔍 Comparer les programmes
+            {searchLoading ? "✈️ Recherche en cours..." : "🔍 Comparer les programmes"}
           </button>
         </div>
 
@@ -1083,61 +1166,111 @@ export default function App() {
               </div>
             </div>
 
-            {/* Real-time search engines */}
-            <div className="rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 p-4 mb-4">
-              <p className="text-white font-bold text-sm mb-1">🔎 Recherche en temps réel</p>
-              <p className="text-indigo-300 text-xs mb-3">Cliquez pour voir les vrais prix disponibles</p>
-              <div className="flex gap-3">
-                <a
-                  href={skyscannerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm transition-colors"
-                >
-                  ✈️ Skyscanner
-                </a>
-                <a
-                  href={googleFlightsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-colors"
-                >
-                  🔵 Google Flights
-                </a>
+            {/* ── REAL-TIME FLIGHT RESULTS ── */}
+            {searchLoading && (
+              <div className="bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl p-6 mb-4 text-center">
+                <div className="text-3xl mb-2">✈️</div>
+                <p className="text-indigo-200 font-bold text-sm">Recherche des vols en cours...</p>
+                <p className="text-indigo-400 text-xs mt-1">Google Flights + Skyscanner</p>
               </div>
-            </div>
+            )}
 
-            {/* User price input */}
-            <div className="rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 px-4 py-3 mb-4">
-              <p className="text-white font-bold text-sm mb-1">💡 Prix trouvé ?</p>
-              <p className="text-indigo-300 text-xs mb-2">Entrez le prix cash vu sur Skyscanner / Google Flights pour une comparaison exacte avec les miles</p>
-              <div className="flex items-center gap-2">
-                <span className="text-indigo-300 font-bold">$</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={`ex: ${cabin === 1 ? cashBus : cashEco}`}
-                  value={foundPrice}
-                  onChange={(e) => setFoundPrice(e.target.value)}
-                  className="flex-1 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl px-3 py-2 text-white text-sm placeholder-indigo-400 outline-none focus:border-indigo-400"
-                />
-                {foundPrice && (
-                  <button
-                    onClick={() => setFoundPrice("")}
-                    className="text-indigo-400 hover:text-white text-sm px-2"
-                  >✕</button>
-                )}
+            {!searchLoading && (googleResults || skyResults || googleError || skyError) && (
+              <div className="space-y-3 mb-4">
+
+                {/* Google Flights Results */}
+                <div className="bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                    <p className="text-white font-bold text-sm">🔵 Google Flights</p>
+                    {googleError && <span className="text-red-400 text-xs">{googleError}</span>}
+                    {bestGooglePrice && <span className="text-emerald-300 font-bold text-xs">Meilleur: {fmt.usd(bestGooglePrice)}</span>}
+                  </div>
+                  {googleResults && (() => {
+                    const flights = [...(googleResults.best_flights || []), ...(googleResults.other_flights || [])].slice(0, 4);
+                    return flights.length === 0 ? (
+                      <p className="text-indigo-400 text-xs px-4 pb-3">Aucun vol trouvé</p>
+                    ) : (
+                      <div className="divide-y divide-white divide-opacity-10">
+                        {flights.map((f, i) => {
+                          const leg = f.flights?.[0];
+                          const stops = (f.flights?.length || 1) - 1;
+                          return (
+                            <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                              <div>
+                                <div className="text-white text-sm font-bold">{leg?.airline || "—"}</div>
+                                <div className="text-indigo-300 text-xs">
+                                  {stops === 0 ? "✅ Direct" : `${stops} escale(s)`}
+                                  {leg?.departure_airport?.time && ` · ${String(leg.departure_airport.time).slice(0,10)}`}
+                                </div>
+                                {f.total_duration && (
+                                  <div className="text-indigo-400 text-xs">{Math.floor(f.total_duration/60)}h{f.total_duration%60}min</div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-white font-black">{fmt.usd(f.price)}</div>
+                                <div className="text-indigo-300 text-xs">{fmt.xof(f.price * USD_XOF)}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Skyscanner Results */}
+                <div className="bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl overflow-hidden">
+                  <div className="flex items-center justify-between px-4 pt-3 pb-2">
+                    <p className="text-white font-bold text-sm">🔶 Skyscanner</p>
+                    {skyError && <span className="text-red-400 text-xs">{skyError}</span>}
+                    {bestSkyPrice && <span className="text-emerald-300 font-bold text-xs">Meilleur: {fmt.usd(bestSkyPrice)}</span>}
+                  </div>
+                  {skyResults && (() => {
+                    const its = skyResults.data?.itineraries?.slice(0, 4) || [];
+                    return its.length === 0 ? (
+                      <p className="text-indigo-400 text-xs px-4 pb-3">Aucun vol trouvé</p>
+                    ) : (
+                      <div className="divide-y divide-white divide-opacity-10">
+                        {its.map((it, i) => {
+                          const leg = it.legs?.[0];
+                          const carrier = leg?.carriers?.marketing?.[0]?.name || "—";
+                          return (
+                            <div key={i} className="flex items-center justify-between px-4 py-2.5">
+                              <div>
+                                <div className="text-white text-sm font-bold">{carrier}</div>
+                                <div className="text-indigo-300 text-xs">
+                                  {leg?.stopCount === 0 ? "✅ Direct" : `${leg?.stopCount ?? "?"} escale(s)`}
+                                  {leg?.departure && ` · ${String(leg.departure).slice(0,10)}`}
+                                </div>
+                                {leg?.durationInMinutes && (
+                                  <div className="text-indigo-400 text-xs">{Math.floor(leg.durationInMinutes/60)}h{leg.durationInMinutes%60}min</div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <div className="text-white font-black">{fmt.usd(it.price?.raw)}</div>
+                                <div className="text-indigo-300 text-xs">{fmt.xof((it.price?.raw || 0) * USD_XOF)}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
               </div>
-            </div>
+            )}
 
             {/* Cash comparison bar */}
             <div className="flex items-center justify-between bg-white bg-opacity-10 border border-white border-opacity-20 rounded-2xl px-4 py-3 mb-4">
               <div>
                 <p className="text-white font-bold text-sm">
-                  {isUserPrice ? "💵 Prix cash saisi" : "💵 Prix cash (estimation)"}
+                  {isRealPrice ? "💵 Meilleur prix cash trouvé" : "💵 Prix cash (estimation)"}
                 </p>
                 <p className="text-indigo-300 text-xs">
-                  {isUserPrice ? "Votre prix trouvé sur Skyscanner/Google" : `A/R ${cabin === 1 ? "Business" : "Économie"} — prix indicatif`}
+                  {isRealPrice
+                    ? `A/R ${cabin === 1 ? "Business" : "Économie"} — source: Google Flights / Skyscanner`
+                    : `A/R ${cabin === 1 ? "Business" : "Économie"} — prix indicatif`}
                 </p>
               </div>
               <div className="text-right">

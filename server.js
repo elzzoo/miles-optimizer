@@ -10,10 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const allowedOrigins = process.env.NODE_ENV === "production"
-  ? [process.env.APP_URL].filter(Boolean)
-  : ["http://localhost:5173", "http://localhost:3001"];
-
+// Frontend is served by the same Express server in production
+// so CORS only needs to cover local dev
+const allowedOrigins = ["http://localhost:5173", "http://localhost:3001"];
 app.use(cors({ origin: allowedOrigins }));
 
 app.use("/api/", rateLimit({

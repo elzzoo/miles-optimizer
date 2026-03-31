@@ -1,14 +1,20 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { AIRPORTS } from "../data/airports.js";
+import { AIRPORTS, airportsMap } from "../data/airports.js";
 
 export default function AirportPicker({ label, value, onChange, exclude }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
   const ref = useRef(null);
-  const selected = AIRPORTS.find(a => a.code === value);
+  const selected = airportsMap[value];
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q), 150);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const filtered = useMemo(() => {
-    const lq = q.toLowerCase();
+    const lq = debouncedQ.toLowerCase();
     return AIRPORTS
       .filter(a => a.code !== exclude && (
         a.code.toLowerCase().includes(lq) ||
@@ -16,7 +22,7 @@ export default function AirportPicker({ label, value, onChange, exclude }) {
         a.country.toLowerCase().includes(lq)
       ))
       .slice(0, 8);
-  }, [q, exclude]);
+  }, [debouncedQ, exclude]);
 
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };

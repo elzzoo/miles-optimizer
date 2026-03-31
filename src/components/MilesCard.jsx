@@ -104,7 +104,18 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay }) 
 
         <p className="text-xs text-gray-400 italic mb-2">{program.notes}</p>
         {program.airlines.length > 0 && (
-          <p className="text-xs text-gray-400">✈️ {program.airlines.join(" · ")}</p>
+          <p className="text-xs text-gray-400 mb-3">✈️ {program.airlines.join(" · ")}</p>
+        )}
+        {program.bookingUrl && (
+          <a
+            href={program.bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={e => e.stopPropagation()}
+            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border border-indigo-100"
+          >
+            Réserver avec des miles ↗
+          </a>
         )}
       </div>
     </div>

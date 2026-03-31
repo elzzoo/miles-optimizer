@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { searchGoogleFlights } from "../services/serpapi.js";
 import { searchSkyscanner } from "../services/skyscanner.js";
+import { fetchPromos } from "../services/promos.js";
 
 const router = Router();
 
@@ -18,9 +19,12 @@ function setCache(key, data) {
   if (apiCache.size > 500) apiCache.delete(apiCache.keys().next().value);
 }
 
+const IATA_RE = /^[A-Z]{3}$/;
+
 function validateParams(req, res) {
   const { origin, dest, depDate, passengers } = req.query;
   if (!origin || !dest) return res.status(400).json({ error: "Paramètres origin et dest requis" });
+  if (!IATA_RE.test(origin) || !IATA_RE.test(dest)) return res.status(400).json({ error: "Code IATA invalide (3 lettres majuscules)" });
   if (origin === dest) return res.status(400).json({ error: "Origin et destination doivent être différents" });
   if (!depDate || !/^\d{4}-\d{2}-\d{2}$/.test(depDate)) return res.status(400).json({ error: "Format depDate invalide (YYYY-MM-DD)" });
   if (passengers && (isNaN(passengers) || passengers < 1 || passengers > 9)) return res.status(400).json({ error: "Passengers doit être entre 1 et 9" });
@@ -58,6 +62,23 @@ router.get("/skyscanner", async (req, res) => {
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// Promos — cached 4h
+const PROMOS_TTL = 4 * 60 * 60 * 1000;
+let promosCache = null;
+
+router.get("/promos", async (req, res) => {
+  if (promosCache && Date.now() - promosCache.ts < PROMOS_TTL) {
+    return res.json({ ...promosCache.data, _cached: true });
+  }
+  try {
+    const data = await fetchPromos();
+    promosCache = { data, ts: Date.now() };
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message, promos: [] });
   }
 });
 

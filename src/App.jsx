@@ -3,10 +3,10 @@ import AirportPicker from "./components/AirportPicker.jsx";
 import FlightCard from "./components/FlightCard.jsx";
 import MilesCard from "./components/MilesCard.jsx";
 import Skeleton from "./components/Skeleton.jsx";
+import PromoBanner from "./components/PromoBanner.jsx";
 import { useFlights } from "./hooks/useFlights.js";
 import { useMilesCalculator } from "./hooks/useMilesCalculator.js";
 import { airportsMap } from "./data/airports.js";
-import { PROGRAMS } from "./data/programs.js";
 import { today, addDays } from "./utils/dates.js";
 import { fmt, USD_XOF, USD_EUR, estimateCash } from "./utils/currency.js";
 import { haversine } from "./utils/distance.js";
@@ -28,7 +28,7 @@ export default function App() {
   const distMiles = useMemo(() => origA && destA ? haversine(origA.lat, origA.lon, destA.lat, destA.lon) : 0, [origA, destA]);
 
   const { googleFlights, skyFlights, gLoading, sLoading, gError, sError, loading, allFlights, bestApiPrice, search, reset } = useFlights();
-  const milesResults = useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay });
+  const milesResults = useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers });
 
   useEffect(() => {
     if (retDate < depDate) setRetDate(addDays(depDate, 7));
@@ -52,7 +52,6 @@ export default function App() {
 
   const bestMiles = milesResults[0];
   const milesSavings = bestMiles?.result ? cashUSD - bestMiles.result.totalUSD : null;
-  const activePromos = PROGRAMS.filter(p => p.promoActive);
 
   return (
     <div className="min-h-screen pb-12" style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)" }}>
@@ -65,20 +64,8 @@ export default function App() {
           <p className="text-blue-300 text-sm mt-1">Comparez cash vs miles — trouvez le moins cher</p>
         </div>
 
-        {/* PROMO BANNER */}
-        {activePromos.length > 0 && (
-          <div className="rounded-2xl border border-yellow-500 border-opacity-30 bg-yellow-500 bg-opacity-10 p-3 mb-4">
-            <p className="text-yellow-300 text-xs font-bold uppercase tracking-widest mb-2">🔥 Promos actives</p>
-            <div className="flex flex-wrap gap-2">
-              {activePromos.map(p => (
-                <div key={p.id} className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-full bg-emerald-500 bg-opacity-20 text-emerald-300 border border-emerald-500 border-opacity-30">
-                  {p.emoji} {p.short} — {p.promoLabel}
-                  {p.promoDaysLeft !== null && <span className="bg-black bg-opacity-20 rounded-full px-1.5">{p.promoDaysLeft}j</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* PROMO BANNER — temps réel */}
+        <PromoBanner />
 
         {/* SEARCH FORM */}
         <div className="bg-white rounded-3xl shadow-2xl p-5 mb-5">

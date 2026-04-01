@@ -224,7 +224,7 @@ export default function App() {
               {allFlights.length > 0 && (
                 <div className="space-y-2">
                   {allFlights.map((f, i) => (
-                    <FlightCard key={i} flight={f} idx={i} source={f.source} selectedIdx={selectedIdx} onSelect={setSelectedIdx} />
+                    <FlightCard key={i} flight={f} idx={i} source={f.source} selectedIdx={selectedIdx} onSelect={setSelectedIdx} rates={rates} />
                   ))}
                   {selectedIdx !== null && (
                     <p className="text-center text-indigo-400 text-xs py-1">Prix sélectionné utilisé pour la comparaison miles ↓</p>

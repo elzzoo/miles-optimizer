@@ -1,6 +1,7 @@
-import { fmt, USD_XOF } from "../utils/currency.js";
+import { fmt, FALLBACK_RATES } from "../utils/currency.js";
 
-export default function FlightCard({ flight, idx, selectedIdx, onSelect, source }) {
+export default function FlightCard({ flight, idx, selectedIdx, onSelect, source, rates }) {
+  const USD_XOF = rates?.USD_XOF || FALLBACK_RATES.USD_XOF;
   const isSelected = selectedIdx === idx;
   const depTime = flight.depTime ? String(flight.depTime).slice(11, 16) : null;
 

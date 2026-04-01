@@ -1,7 +1,5 @@
-// RSS feeds for miles & points deals — no API key, no signup
-import Parser from "rss-parser";
-
-const parser = new Parser({ timeout: 8000 });
+// RSS feeds for miles & points deals — no API key, no npm package
+// Uses native fetch + lightweight XML regex parsing
 
 const FEEDS = [
   { url: "https://thepointsguy.com/feed/",            source: "The Points Guy" },
@@ -29,6 +27,27 @@ const SCORE_SIGNALS = [
   { words: ["miles", "points", "avios", "award"],                     score: 1 },
 ];
 
+function extractTag(xml, tag) {
+  const m = xml.match(new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`, "i"));
+  return m ? m[1].trim() : "";
+}
+
+function parseRss(xml, sourceName) {
+  const items = [];
+  const itemRe = /<item>([\s\S]*?)<\/item>/gi;
+  let m;
+  while ((m = itemRe.exec(xml)) !== null && items.length < 15) {
+    const block = m[1];
+    const title = extractTag(block, "title");
+    const link = extractTag(block, "link") || extractTag(block, "guid");
+    const pubDate = extractTag(block, "pubDate");
+    const raw = extractTag(block, "description");
+    const snippet = raw.replace(/<[^>]+>/g, "").slice(0, 120).trim();
+    if (title) items.push({ title, link, date: pubDate, snippet, source: sourceName });
+  }
+  return items;
+}
+
 function detectProgram(text) {
   const lower = text.toLowerCase();
   for (const p of PROGRAM_MAP) {
@@ -44,14 +63,13 @@ function scoreText(text) {
 
 async function fetchFeed(feed) {
   try {
-    const parsed = await parser.parseURL(feed.url);
-    return (parsed.items || []).slice(0, 15).map(item => ({
-      title: item.title || "",
-      snippet: (item.contentSnippet || item.summary || "").slice(0, 120),
-      link: item.link || item.guid || "",
-      date: item.pubDate || item.isoDate || "",
-      source: feed.source,
-    }));
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const r = await fetch(feed.url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!r.ok) return [];
+    const xml = await r.text();
+    return parseRss(xml, feed.source);
   } catch {
     return [];
   }

@@ -67,9 +67,9 @@ export default function PromoBanner() {
                 <p className="text-indigo-400 text-xs mt-0.5 line-clamp-1">{item.snippet}</p>
               )}
               <div className="flex items-center gap-2 mt-1">
-                {item.programId && (
+                {(item.programShort || (item.programId && PROGRAM_SHORT[item.programId])) && (
                   <span className="text-xs text-emerald-400 font-semibold">
-                    {PROGRAM_SHORT[item.programId]}
+                    {item.programShort || PROGRAM_SHORT[item.programId]}
                   </span>
                 )}
                 {item.source && <span className="text-indigo-500 text-xs">{item.source}</span>}

@@ -1,6 +1,7 @@
+import { fetchRssPromos } from "./rssFeeds.js";
+
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
-// All known programs + generic airline miles keywords for broad search
 const PROGRAM_MAP = [
   { id: "aeroplan",   short: "Aeroplan",    keywords: ["aeroplan", "air canada aeroplan"] },
   { id: "lifemiles",  short: "LifeMiles",   keywords: ["lifemiles", "avianca lifemiles"] },
@@ -12,7 +13,6 @@ const PROGRAM_MAP = [
   { id: "aadvantage", short: "AAdvantage",  keywords: ["aadvantage", "american aadvantage"] },
 ];
 
-// High-value promo keywords for scoring
 const PROMO_SIGNALS = [
   { words: ["100%", "double", "triple", "triple miles"], score: 5 },
   { words: ["80%", "50%", "bonus miles", "miles bonus"], score: 4 },
@@ -23,9 +23,8 @@ const PROMO_SIGNALS = [
 
 function scorePromo(text) {
   const lower = text.toLowerCase();
-  return PROMO_SIGNALS.reduce((total, sig) => {
-    return total + (sig.words.some(w => lower.includes(w)) ? sig.score : 0);
-  }, 0);
+  return PROMO_SIGNALS.reduce((total, sig) =>
+    total + (sig.words.some(w => lower.includes(w)) ? sig.score : 0), 0);
 }
 
 function detectProgram(text) {
@@ -36,65 +35,72 @@ function detectProgram(text) {
   return null;
 }
 
-async function fetchNews(query) {
-  const params = new URLSearchParams({
-    engine: "google_news",
-    q: query,
-    hl: "en",
-    gl: "us",
-    api_key: SERPAPI_KEY,
-  });
-  const r = await fetch(`https://serpapi.com/search.json?${params}`);
-  if (!r.ok) throw new Error(`SerpAPI news ${r.status}`);
-  const data = await r.json();
-  return data.news_results || [];
+async function fetchSerpApiNews(query) {
+  if (!SERPAPI_KEY) return [];
+  try {
+    const params = new URLSearchParams({
+      engine: "google_news",
+      q: query,
+      hl: "en",
+      gl: "us",
+      api_key: SERPAPI_KEY,
+    });
+    const r = await fetch(`https://serpapi.com/search.json?${params}`);
+    if (!r.ok) return [];
+    const data = await r.json();
+    return (data.news_results || []).map(item => ({
+      title: item.title || "",
+      snippet: item.snippet || "",
+      source: item.source?.name || (typeof item.source === "string" ? item.source : ""),
+      date: item.date || "",
+      link: item.link || "",
+    }));
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchPromos() {
-  if (!SERPAPI_KEY) {
-    return { promos: [], fetchedAt: new Date().toISOString(), error: "SERPAPI_KEY not configured" };
-  }
-
-  // Two parallel queries: one broad for all airlines, one targeted for big bonuses
-  const [broadResults, bonusResults] = await Promise.allSettled([
-    fetchNews("airline miles points bonus promo 2025 2026 (Aeroplan OR LifeMiles OR \"Flying Blue\" OR MileagePlus OR Avios OR AAdvantage OR \"Miles Smiles\")"),
-    fetchNews("miles bonus 50% 80% 100% double triple points airline loyalty 2026"),
+  // Run SerpAPI (2 queries) and RSS feeds in parallel
+  const [broad, bonus, rssResult] = await Promise.allSettled([
+    fetchSerpApiNews("airline miles points bonus promo 2025 2026 (Aeroplan OR LifeMiles OR \"Flying Blue\" OR MileagePlus OR Avios OR AAdvantage OR \"Miles Smiles\")"),
+    fetchSerpApiNews("miles bonus 50% 80% 100% double triple points airline loyalty 2026"),
+    fetchRssPromos(),
   ]);
 
-  const allNews = [
-    ...(broadResults.status === "fulfilled" ? broadResults.value : []),
-    ...(bonusResults.status === "fulfilled" ? bonusResults.value : []),
+  const serpItems = [
+    ...(broad.status === "fulfilled" ? broad.value : []),
+    ...(bonus.status === "fulfilled" ? bonus.value : []),
   ];
+  const rss = rssResult.status === "fulfilled" ? rssResult.value : [];
 
-  // Deduplicate by title
+  // Merge, deduplicate by title
   const seen = new Set();
-  const unique = allNews.filter(item => {
+  const all = [...serpItems, ...rss].filter(item => {
     if (!item.title || seen.has(item.title)) return false;
     seen.add(item.title);
     return true;
   });
 
-  // Score and sort
-  const scored = unique.map(item => {
+  const scored = all.map(item => {
     const fullText = (item.title || "") + " " + (item.snippet || "");
     const program = detectProgram(fullText);
-    const score = scorePromo(fullText);
+    const score = item.score ?? scorePromo(fullText);
     return {
       title: item.title,
       snippet: item.snippet || "",
-      source: item.source?.name || (typeof item.source === "string" ? item.source : ""),
+      source: item.source || "",
       date: item.date || "",
       link: item.link || "",
-      programId: program?.id || null,
-      programShort: program?.short || null,
+      programId: item.programId ?? program?.id ?? null,
+      programShort: item.programShort ?? program?.short ?? null,
       score,
     };
   });
 
-  // Sort by score desc, take top 5
   const promos = scored
     .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+    .slice(0, 7);
 
   return { promos, fetchedAt: new Date().toISOString() };
 }

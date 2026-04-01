@@ -2,9 +2,13 @@ import { Router } from "express";
 import { searchGoogleFlights } from "../services/serpapi.js";
 import { searchSkyscanner } from "../services/skyscanner.js";
 import { fetchPromos } from "../services/promos.js";
+import { getExchangeRates } from "../services/exchangeRates.js";
+import { getWeather } from "../services/weather.js";
+import { getCountryInfo } from "../services/countryInfo.js";
 
 const router = Router();
 
+// Flight results cache — 12h
 const CACHE_TTL = 12 * 60 * 60 * 1000;
 const apiCache = new Map();
 
@@ -34,11 +38,9 @@ function validateParams(req, res) {
 router.get("/google-flights", async (req, res) => {
   const err = validateParams(req, res);
   if (err) return;
-
   const cacheKey = `gf:${JSON.stringify(req.query)}`;
   const cached = getCached(cacheKey);
   if (cached) return res.json({ ...cached, _cached: true });
-
   try {
     const data = await searchGoogleFlights(req.query);
     setCache(cacheKey, data);
@@ -51,11 +53,9 @@ router.get("/google-flights", async (req, res) => {
 router.get("/skyscanner", async (req, res) => {
   const err = validateParams(req, res);
   if (err) return;
-
   const cacheKey = `sky:${JSON.stringify(req.query)}`;
   const cached = getCached(cacheKey);
   if (cached) return res.json({ ...cached, _cached: true });
-
   try {
     const data = await searchSkyscanner(req.query);
     setCache(cacheKey, data);
@@ -79,6 +79,41 @@ router.get("/promos", async (req, res) => {
     res.json(data);
   } catch (e) {
     res.status(500).json({ error: e.message, promos: [] });
+  }
+});
+
+// Live exchange rates — 6h cache inside service
+router.get("/rates", async (req, res) => {
+  try {
+    const data = await getExchangeRates();
+    res.json(data);
+  } catch {
+    res.json({ USD_EUR: 0.92, USD_XOF: 568, USD_GBP: 0.79, updatedAt: null, _fallback: true });
+  }
+});
+
+// Destination weather via Open-Meteo — 3h cache inside service
+router.get("/weather", async (req, res) => {
+  const lat = parseFloat(req.query.lat);
+  const lon = parseFloat(req.query.lon);
+  if (isNaN(lat) || isNaN(lon)) return res.status(400).json({ error: "lat/lon requis" });
+  try {
+    const data = await getWeather(lat, lon);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Country info via REST Countries — 24h cache inside service
+router.get("/country", async (req, res) => {
+  const iso2 = (req.query.iso2 || "").toUpperCase();
+  if (!/^[A-Z]{2}$/.test(iso2)) return res.status(400).json({ error: "iso2 invalide" });
+  try {
+    const data = await getCountryInfo(iso2);
+    res.json(data);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

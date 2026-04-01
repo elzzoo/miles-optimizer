@@ -1,11 +1,14 @@
 import { useMemo } from "react";
 import { PROGRAMS } from "../data/programs.js";
 import { getMilesOW } from "../data/charts.js";
-import { USD_XOF, USD_EUR } from "../utils/currency.js";
+import { FALLBACK_RATES } from "../utils/currency.js";
 
-export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers }) {
+export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates }) {
   return useMemo(() => {
     const pax = passengers || 1;
+    const USD_XOF = rates?.USD_XOF || FALLBACK_RATES.USD_XOF;
+    const USD_EUR = rates?.USD_EUR || FALLBACK_RATES.USD_EUR;
+
     return PROGRAMS.map(program => {
       const [ecoOW, busOW] = getMilesOW(program.id, origin, dest, distMiles);
       const milesOW = cabin === 1 ? busOW : ecoOW;
@@ -32,5 +35,5 @@ export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, p
     })
     .filter(x => x.result !== null)
     .sort((a, b) => a.result.totalUSD - b.result.totalUSD);
-  }, [origin, dest, cabin, distMiles, isOneWay, passengers]);
+  }, [origin, dest, cabin, distMiles, isOneWay, passengers, rates]);
 }

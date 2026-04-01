@@ -16,9 +16,14 @@ async function getEntity(iata) {
       `https://${RAPIDAPI_HOST}/api/v1/flights/searchAirport?query=${query}&locale=en-US`,
       { headers: RH() }
     );
-    if (!r.ok) throw new Error(`Airport lookup returned ${r.status}`);
+    if (!r.ok) {
+      const body = await r.text();
+      if (body.includes("not subscribed")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
+      throw new Error(`Airport lookup returned ${r.status}`);
+    }
 
     const j = await r.json();
+    if (j.message?.includes("not subscribed")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
     if (!j.data?.length) continue;
 
     // Try exact skyId match first
@@ -50,6 +55,7 @@ async function pollFlights(params, headers, maxAttempts = 3) {
 
     if (!r.ok) {
       const body = await r.text();
+      if (body.includes("not subscribed")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
       throw new Error(`Skyscanner returned ${r.status}: ${body.slice(0, 200)}`);
     }
 

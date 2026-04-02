@@ -46,15 +46,6 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay }) 
           </div>
         </div>
 
-        {program.promoActive && (
-          <div className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 font-bold text-xs px-2.5 py-1 rounded-full mb-3">
-            🔥 {program.promoLabel}{program.promoDaysLeft !== null && ` · ${program.promoDaysLeft}j`}
-          </div>
-        )}
-        {!program.promoActive && program.promoDaysLeft === null && (
-          <p className="text-xs text-gray-400 italic mb-2">💡 {program.promoLabel}</p>
-        )}
-
         <div
           className={`rounded-xl p-3 mb-3 cursor-pointer transition-colors ${rank === 0 ? "bg-amber-100 hover:bg-amber-200" : "bg-gray-50 hover:bg-gray-100"}`}
           onClick={() => setExpanded(!expanded)}
@@ -73,8 +64,8 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay }) 
             </div>
             <div className="flex justify-between py-1.5 border-b border-gray-100">
               <span className="text-gray-500">Prix par mile</span>
-              <span className={`font-bold ${program.promoActive ? "text-emerald-600" : ""}`}>
-                ${result.ppm.toFixed(4)} {program.promoActive && "🔥"}
+              <span className="font-bold">
+                ${result.ppm.toFixed(4)}
               </span>
             </div>
             <div className="flex justify-between py-1.5 border-b border-gray-100">

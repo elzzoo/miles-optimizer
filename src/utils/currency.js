@@ -1,5 +1,28 @@
 export const FALLBACK_RATES = { USD_XOF: 568, USD_EUR: 0.92, USD_GBP: 0.79 };
 
+export const CURRENCIES = ["USD", "EUR", "XOF", "GBP"];
+
+export function convert(amountUSD, currency, rates) {
+  if (amountUSD == null) return null;
+  const r = rates || FALLBACK_RATES;
+  switch (currency) {
+    case "EUR": return amountUSD * (r.USD_EUR || FALLBACK_RATES.USD_EUR);
+    case "XOF": return amountUSD * (r.USD_XOF || FALLBACK_RATES.USD_XOF);
+    case "GBP": return amountUSD * (r.USD_GBP || FALLBACK_RATES.USD_GBP);
+    default: return amountUSD; // USD
+  }
+}
+
+export function formatAmount(amount, currency) {
+  if (amount == null) return "—";
+  switch (currency) {
+    case "EUR": return "€" + new Intl.NumberFormat("fr-FR").format(Math.round(amount));
+    case "XOF": return new Intl.NumberFormat("fr-FR").format(Math.round(amount)) + " FCFA";
+    case "GBP": return "£" + new Intl.NumberFormat("en-GB").format(Math.round(amount));
+    default: return "$" + new Intl.NumberFormat("en-US").format(Math.round(amount));
+  }
+}
+
 export const fmt = {
   xof: (n) => n == null ? "—" : new Intl.NumberFormat("fr-FR").format(Math.round(n)) + " FCFA",
   usd: (n) => n == null ? "—" : "$" + new Intl.NumberFormat("en-US").format(Math.round(n)),

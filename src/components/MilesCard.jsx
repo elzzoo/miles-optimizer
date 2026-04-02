@@ -11,6 +11,30 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
   const [expanded, setExpanded] = useState(rank === 0);
   if (!result) return null;
 
+  // Stale data check
+  function isStale(updatedAt) {
+    if (!updatedAt) return false;
+    const [year, month] = updatedAt.split("-").map(Number);
+    const updated = new Date(year, month - 1);
+    const diffDays = (Date.now() - updated) / (1000 * 60 * 60 * 24);
+    return diffDays > 90;
+  }
+
+  // CPP: (cashUSD - taxes) / milesUsed * 100 = cents per mile
+  const cpp = (result.milesUsed > 0 && cashUSD > result.taxes)
+    ? ((cashUSD - result.taxes) / result.milesUsed * 100)
+    : null;
+
+  const cppBenchmark = cpp === null ? null
+    : cpp > 2 ? (t?.cppExcellent || "Excellent (>2¢)")
+    : cpp > 1 ? (t?.cppGood || "Good (1-2¢)")
+    : (t?.cppLow || "Low (<1¢)");
+
+  const cppColor = cpp === null ? ""
+    : cpp > 2 ? "text-emerald-700 bg-emerald-50"
+    : cpp > 1 ? "text-amber-700 bg-amber-50"
+    : "text-red-600 bg-red-50";
+
   const savings = cashUSD - result.totalUSD;
   const savingsPct = Math.round((savings / cashUSD) * 100);
   const isCheaper = savings > 0;
@@ -74,6 +98,14 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
               <span className="text-gray-500">{t?.cardPricePerMile || "Price per mile"}</span>
               <span className="font-bold">${result.ppm.toFixed(4)}</span>
             </div>
+            {cpp !== null && (
+              <div className="flex justify-between py-1.5 border-b border-gray-100">
+                <span className="text-gray-500">{t?.cppLabel || "Mile value"}</span>
+                <span className={`font-bold text-xs px-2 py-0.5 rounded-full ${cppColor}`}>
+                  {cpp.toFixed(2)}¢ — {cppBenchmark}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between py-1.5 border-b border-gray-100">
               <span className="text-gray-500">{t?.cardMilesCost || "Miles purchase cost"}</span>
               <span className="font-bold">{fmt.usd(result.milesCostUSD)}</span>
@@ -101,6 +133,9 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
           </div>
         )}
 
+        {program.updatedAt && isStale(program.updatedAt) && (
+          <p className="text-xs text-amber-500 mb-1">⚠️ {t?.staleRates || "Rates may be outdated"}</p>
+        )}
         <p className="text-xs text-gray-400 italic mb-2">{lang === "en" ? (program.notesEn || program.notes) : program.notes}</p>
         {program.airlines.length > 0 && (
           <p className="text-xs text-gray-400 mb-3">✈️ {program.airlines.join(" · ")}</p>

@@ -1,4 +1,6 @@
-import * as airportCache from "../cache/airportCache.js";
+// In-memory airport entity cache (replaces deleted airportCache.js)
+const _cache = new Map();
+const airportCache = { get: (k) => _cache.get(k), set: (k, v) => _cache.set(k, v) };
 
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = "sky-scrapper.p.rapidapi.com";

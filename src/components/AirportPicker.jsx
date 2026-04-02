@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { AIRPORTS, airportsMap } from "../data/airports.js";
 
-export default function AirportPicker({ label, value, onChange, exclude }) {
+export default function AirportPicker({ label, value, onChange, exclude, lang }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
@@ -42,7 +42,7 @@ export default function AirportPicker({ label, value, onChange, exclude }) {
             <span className="text-2xl">{selected.flag}</span>
             <div className="min-w-0">
               <div className="font-black text-gray-900 text-lg leading-none">{selected.code}</div>
-              <div className="text-xs text-gray-400 truncate">{selected.city}, {selected.country}</div>
+              <div className="text-xs text-gray-400 truncate">{lang === "en" ? (selected.cityEn || selected.city) : selected.city}, {lang === "en" ? (selected.countryEn || selected.country) : selected.country}</div>
             </div>
           </>
         ) : <span className="text-gray-400 text-sm">Sélectionner...</span>}
@@ -69,7 +69,7 @@ export default function AirportPicker({ label, value, onChange, exclude }) {
                 <span className="text-xl">{a.flag}</span>
                 <div>
                   <span className="font-bold text-sm text-gray-900">{a.code}</span>
-                  <span className="text-gray-400 text-sm"> — {a.city}, {a.country}</span>
+                  <span className="text-gray-400 text-sm"> — {lang === "en" ? (a.cityEn || a.city) : a.city}, {lang === "en" ? (a.countryEn || a.country) : a.country}</span>
                 </div>
               </div>
             ))}

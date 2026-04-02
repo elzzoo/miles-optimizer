@@ -76,6 +76,13 @@ const fr = {
   destCapital: "Capitale",
   destCurrency: "Devise locale",
   destWeatherLoading: "Météo…",
+
+  // CPP (centimes par mile)
+  cppLabel: "Valeur du mile",
+  cppExcellent: "Excellent (>2¢)",
+  cppGood: "Bon (1-2¢)",
+  cppLow: "Faible (<1¢)",
+  staleRates: "Barèmes peut-être dépassés",
 };
 
 export default fr;

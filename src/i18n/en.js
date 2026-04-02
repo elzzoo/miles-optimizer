@@ -109,6 +109,13 @@ const en = {
   destCapital: "Capital",
   destCurrency: "Currency",
   destWeatherLoading: "Loading weather…",
+
+  // CPP (cents per mile)
+  cppLabel: "Mile value",
+  cppExcellent: "Excellent (>2¢)",
+  cppGood: "Good (1-2¢)",
+  cppLow: "Low (<1¢)",
+  staleRates: "Rates may be outdated",
 };
 
 export default en;

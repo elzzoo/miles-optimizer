@@ -8,10 +8,10 @@ function formatUtcOffset(offset) {
 }
 
 export default function DestinationCard({ airport }) {
-  if (!airport) return null;
+  const { weather, loading: wLoading } = useWeather(airport?.lat, airport?.lon);
+  const country = useCountryInfo(airport?.iso2);
 
-  const { weather, loading: wLoading } = useWeather(airport.lat, airport.lon);
-  const country = useCountryInfo(airport.iso2);
+  if (!airport) return null;  // ← hooks called before, correct
 
   const hasData = weather || country;
   if (!hasData && !wLoading) return null;

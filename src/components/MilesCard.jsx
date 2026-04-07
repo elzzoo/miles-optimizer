@@ -7,7 +7,7 @@ const RANK_STYLES = {
   2: { border: "border-orange-200", bg: "bg-white", badge: "🥉", bar: "bg-orange-300" },
 };
 
-export default function MilesCard({ program, result, rank, cashUSD, isOneWay, rates, currency, t, lang }) {
+export default function MilesCard({ program, result, rank, cashUSD, isOneWay, rates, currency, t, lang, origin, dest, cabin }) {
   const [expanded, setExpanded] = useState(rank === 0);
   if (!result) return null;
 
@@ -141,7 +141,10 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
           <p className="text-xs text-gray-400 mb-3">✈️ {program.airlines.join(" · ")}</p>
         )}
         {program.bookingUrl && (
-          <a href={program.bookingUrl} target="_blank" rel="noopener noreferrer"
+          <a
+            href={`/api/go?program=${program.id}&origin=${origin || ""}&dest=${dest || ""}&cabin=${cabin ?? ""}&ref=milescard`}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
             className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border border-indigo-100">
             {t?.cardBook || "Book with miles ↗"}

@@ -337,7 +337,7 @@ export default function App() {
             </p>
             <div className="space-y-3">
               {milesResults.map(({ program, result }, i) => (
-                <MilesCard key={program.id} program={program} result={result} rank={i} cashUSD={cashUSD} isOneWay={isOneWay} rates={rates} currency={currency} t={t} lang={lang} />
+                <MilesCard key={program.id} program={program} result={result} rank={i} cashUSD={cashUSD} isOneWay={isOneWay} rates={rates} currency={currency} t={t} lang={lang} origin={origin} dest={dest} cabin={cabin} />
               ))}
             </div>
 

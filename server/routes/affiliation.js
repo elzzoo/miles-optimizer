@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { PROGRAMS } from "../../src/data/programs.js";
+import { PROGRAMS } from "../../src/data/programs.ts";
 
 const router = Router();
 

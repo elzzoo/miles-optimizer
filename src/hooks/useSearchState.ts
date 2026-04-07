@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { TripType, Cabin } from "../types.js";
 
 // --- URL param + localStorage helpers ---
 const _p = () => new URLSearchParams(window.location.search);
@@ -18,11 +19,11 @@ export function saveSearch(origin, dest, cabin, tripType) {
 export function useSearchState() {
   const [origin, setOrigin] = useState(() => _p().get("from") || _ls("mo-origin", "DSS"));
   const [dest, setDest] = useState(() => _p().get("to") || _ls("mo-dest", "IST"));
-  const [tripType, setTripType] = useState(() => _p().get("type") || _ls("mo-type", "round"));
-  const [cabin, setCabin] = useState(() => {
+  const [tripType, setTripType] = useState<TripType>(() => (_p().get("type") || _ls("mo-type", "round")) as TripType);
+  const [cabin, setCabin] = useState<Cabin>(() => {
     const p = _p();
     const raw = p.has("cabin") ? Number(p.get("cabin")) : Number(_ls("mo-cabin", 1));
-    return Number.isFinite(raw) ? raw : 1;
+    return (Number.isFinite(raw) ? raw : 1) as Cabin;
   });
   const [passengers, setPassengers] = useState(1);
 

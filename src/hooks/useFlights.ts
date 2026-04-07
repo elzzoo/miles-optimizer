@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
+import type { Flight } from "../types.js";
 
-function parseGoogleFlights(data) {
+function parseGoogleFlights(data: unknown): Flight[] {
   if (!data) return [];
   const all = [...(data.best_flights || []), ...(data.other_flights || [])];
   return all
@@ -18,7 +19,7 @@ function parseGoogleFlights(data) {
     .slice(0, 5);
 }
 
-function parseSkyFlights(data) {
+function parseSkyFlights(data: unknown): Flight[] {
   if (!data) return [];
   const its = data.data?.itineraries || [];
   return its

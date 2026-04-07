@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { Currency } from "../types.js";
 import { CURRENCIES } from "../utils/currency.js";
 
 const LS_KEY = "miles-optimizer-currency";
@@ -10,8 +11,8 @@ function detectCurrency() {
   return "USD";
 }
 
-export function useCurrency() {
-  const [currency, setCurrencyState] = useState(detectCurrency);
+export function useCurrency(): { currency: Currency; setCurrency: (c: Currency) => void; currencies: Currency[] } {
+  const [currency, setCurrencyState] = useState<Currency>(detectCurrency as () => Currency);
 
   const setCurrency = useCallback((c) => {
     if (CURRENCIES.includes(c)) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import type { ExchangeRates } from "../types.js";
 
-const FALLBACK = { USD_EUR: 0.92, USD_XOF: 568, USD_GBP: 0.79, updatedAt: null };
+const FALLBACK: ExchangeRates = { USD_EUR: 0.92, USD_XOF: 568, USD_GBP: 0.79, updatedAt: null };
 
 export function useRates() {
   const [rates, setRates] = useState(FALLBACK);

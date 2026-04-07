@@ -1,9 +1,21 @@
 import { useMemo } from "react";
+import type { ProgramWithResult, ExchangeRates, Cabin } from "../types.js";
 import { PROGRAMS } from "../data/programs.js";
 import { getMilesOW } from "../data/charts.js";
 import { FALLBACK_RATES } from "../utils/currency.js";
 
-export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates, milesOwned }) {
+interface UseMilesCalculatorParams {
+  origin: string;
+  dest: string;
+  cabin: Cabin;
+  distMiles: number | null;
+  isOneWay: boolean;
+  passengers: number;
+  rates: ExchangeRates | null;
+  milesOwned: boolean;
+}
+
+export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates, milesOwned }: UseMilesCalculatorParams): ProgramWithResult[] {
   return useMemo(() => {
     const pax = passengers || 1;
     const USD_XOF = rates?.USD_XOF || FALLBACK_RATES.USD_XOF;

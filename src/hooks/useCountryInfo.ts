@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import type { CountryInfo } from "../types.js";
 
 export function useCountryInfo(iso2) {
-  const [info, setInfo] = useState(null);
+  const [info, setInfo] = useState<CountryInfo | null>(null);
 
   useEffect(() => {
     if (!iso2) return;

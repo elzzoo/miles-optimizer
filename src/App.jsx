@@ -10,38 +10,16 @@ import { useMilesCalculator } from "./hooks/useMilesCalculator.js";
 import { useRates } from "./hooks/useRates.js";
 import { useTranslation } from "./i18n/index.js";
 import { useCurrency } from "./hooks/useCurrency.js";
+import { useSearchState, saveSearch } from "./hooks/useSearchState.js";
 import { airportsMap } from "./data/airports.js";
 import { today, addDays } from "./utils/dates.js";
 import { fmt, estimateCash, convert, formatAmount } from "./utils/currency.js";
 import { haversine } from "./utils/distance.js";
 
-// --- URL param + localStorage helpers ---
-const _p = () => new URLSearchParams(window.location.search);
-const _ls = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
-
-function saveSearch(origin, dest, cabin, tripType) {
-  const qs = new URLSearchParams({ from: origin, to: dest, cabin: String(cabin), type: tripType });
-  history.replaceState(null, "", "?" + qs.toString());
-  try {
-    localStorage.setItem("mo-origin", origin);
-    localStorage.setItem("mo-dest", dest);
-    localStorage.setItem("mo-cabin", String(cabin));
-    localStorage.setItem("mo-type", tripType);
-  } catch { /* storage full — ignore */ }
-}
-
 export default function App() {
-  const [origin, setOrigin] = useState(() => _p().get("from") || _ls("mo-origin", "DSS"));
-  const [dest, setDest] = useState(() => _p().get("to") || _ls("mo-dest", "IST"));
-  const [tripType, setTripType] = useState(() => _p().get("type") || _ls("mo-type", "round"));
+  const { origin, setOrigin, dest, setDest, tripType, setTripType, cabin, setCabin, passengers, setPassengers, handleSwap } = useSearchState();
   const [depDate, setDepDate] = useState(addDays(today, 30));
   const [retDate, setRetDate] = useState(addDays(today, 40));
-  const [cabin, setCabin] = useState(() => {
-    const p = _p();
-    const raw = p.has("cabin") ? Number(p.get("cabin")) : Number(_ls("mo-cabin", 1));
-    return Number.isFinite(raw) ? raw : 1;
-  });
-  const [passengers, setPassengers] = useState(1);
   const [milesOwned, setMilesOwned] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(null);
@@ -88,12 +66,11 @@ export default function App() {
     search(params);
   }, [origin, dest, depDate, retDate, cabin, passengers, tripType, isOneWay, search, reset]);
 
-  const handleSwap = useCallback(() => {
-    setOrigin(dest);
-    setDest(origin);
+  const handleSwapAndReset = useCallback(() => {
+    handleSwap();
     setSearched(false);
     setSelectedIdx(null);
-  }, [origin, dest]);
+  }, [handleSwap]);
 
   const handleCopyLink = useCallback(() => {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -170,7 +147,7 @@ export default function App() {
 
               <div className="flex items-end gap-2 mb-3">
                 <AirportPicker label={t.labelDeparture} value={origin} onChange={v => { setOrigin(v); setSearched(false); }} exclude={dest} lang={lang} />
-                <button onClick={handleSwap} aria-label={t.btnSwap}
+                <button onClick={handleSwapAndReset} aria-label={t.btnSwap}
                   className="mb-1 w-10 h-10 rounded-full bg-gray-100 hover:bg-indigo-100 text-gray-600 flex items-center justify-center text-lg transition-all flex-shrink-0 hover:scale-110">
                   ⇄
                 </button>

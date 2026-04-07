@@ -1,5 +1,21 @@
 import { useState } from "react";
+import type { Program, MilesResult, ExchangeRates, Currency, Cabin } from "../types.js";
 import { fmt, convert, formatAmount } from "../utils/currency.js";
+
+interface MilesCardProps {
+  program: Program;
+  result: MilesResult;
+  rank: number;
+  cashUSD: number;
+  isOneWay: boolean;
+  rates: ExchangeRates | null;
+  currency: Currency;
+  t?: Record<string, unknown>;
+  lang?: string;
+  origin?: string;
+  dest?: string;
+  cabin?: Cabin;
+}
 
 const RANK_STYLES = {
   0: { border: "border-yellow-400", bg: "bg-gradient-to-br from-yellow-50 to-amber-50", badge: "🥇", bar: "bg-yellow-400" },
@@ -7,7 +23,7 @@ const RANK_STYLES = {
   2: { border: "border-orange-200", bg: "bg-white", badge: "🥉", bar: "bg-orange-300" },
 };
 
-export default function MilesCard({ program, result, rank, cashUSD, isOneWay, rates, currency, t, lang, origin, dest, cabin }) {
+export default function MilesCard({ program, result, rank, cashUSD, isOneWay, rates, currency, t, lang, origin, dest, cabin }: MilesCardProps) {
   const [expanded, setExpanded] = useState(rank === 0);
   if (!result) return null;
 

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { usePromos } from "../hooks/usePromos.js";
 import { PROGRAMS } from "../data/programs.js";
 

@@ -8,13 +8,20 @@ function resolveJsToTs() {
   return {
     name: 'resolve-js-to-ts',
     resolveId(source, importer) {
-      if (!importer || !source.endsWith('.js')) return null;
-      const tsPath = source.replace(/\.js$/, '.ts');
-      const resolved = path.resolve(path.dirname(importer), tsPath);
-      if (fs.existsSync(resolved)) return resolved;
-      const tsxPath = source.replace(/\.js$/, '.tsx');
-      const resolvedTsx = path.resolve(path.dirname(importer), tsxPath);
-      if (fs.existsSync(resolvedTsx)) return resolvedTsx;
+      if (!importer) return null;
+      const dir = path.dirname(importer);
+      // .jsx → .tsx
+      if (source.endsWith('.jsx')) {
+        const tsxPath = path.resolve(dir, source.replace(/\.jsx$/, '.tsx'));
+        if (fs.existsSync(tsxPath)) return tsxPath;
+      }
+      // .js → .ts or .tsx
+      if (source.endsWith('.js')) {
+        const tsPath = path.resolve(dir, source.replace(/\.js$/, '.ts'));
+        if (fs.existsSync(tsPath)) return tsPath;
+        const tsxPath = path.resolve(dir, source.replace(/\.js$/, '.tsx'));
+        if (fs.existsSync(tsxPath)) return tsxPath;
+      }
       return null;
     },
   };

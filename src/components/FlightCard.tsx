@@ -1,6 +1,18 @@
+import type { Flight, ExchangeRates, Currency } from "../types.js";
 import { fmt, convert, formatAmount, FALLBACK_RATES } from "../utils/currency.js";
 
-export default function FlightCard({ flight, idx, selectedIdx, onSelect, source, rates, currency, t }) {
+interface FlightCardProps {
+  flight: Flight;
+  idx: number;
+  selectedIdx: number | null;
+  onSelect: (idx: number | null) => void;
+  source: "google" | "sky";
+  rates: ExchangeRates | null;
+  currency: Currency;
+  t?: Record<string, string>;
+}
+
+export default function FlightCard({ flight, idx, selectedIdx, onSelect, source, rates, currency, t }: FlightCardProps) {
   const isSelected = selectedIdx === idx;
   const depTime = flight.depTime ? String(flight.depTime).slice(11, 16) : null;
   const priceDisplay = formatAmount(convert(flight.price, currency || "USD", rates), currency || "USD");

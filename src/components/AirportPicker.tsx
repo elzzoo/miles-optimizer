@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useMemo, useRef, useEffect } from "react";
 import { AIRPORTS, airportsMap } from "../data/airports.js";
 

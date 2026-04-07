@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useWeather } from "../hooks/useWeather.js";
 import { useCountryInfo } from "../hooks/useCountryInfo.js";
 

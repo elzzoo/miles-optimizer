@@ -28,11 +28,13 @@ router.get("/go", (req, res) => {
   }
 
   // Log click
-  clickLog.push({ program, origin: origin || null, dest: dest || null, cabin: cabin || null, ref: ref || null, ts: new Date().toISOString() });
+  clickLog.push({ program, origin: origin || null, dest: dest || null, cabin: cabin || null, ref: ref ? ref.slice(0, 128) : null, ts: new Date().toISOString() });
   if (clickLog.length > MAX_LOG) clickLog.shift();
 
   // Redirect to affiliate link or fallback bookingUrl
-  const url = affiliateLinks[program] || BOOKING_URLS[program];
+  // Validate affiliate URL to prevent open redirect via misconfigured env var
+  const affiliateUrl = affiliateLinks[program];
+  const url = (affiliateUrl && affiliateUrl.startsWith("https://")) ? affiliateUrl : BOOKING_URLS[program];
   res.redirect(302, url);
 });
 

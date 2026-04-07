@@ -28,14 +28,24 @@ router.get("/go", (req, res) => {
   }
 
   // Log click
-  clickLog.push({ program, origin: origin || null, dest: dest || null, cabin: cabin || null, ref: ref ? ref.slice(0, 128) : null, ts: new Date().toISOString() });
+  clickLog.push({
+    program,
+    origin: origin ? origin.slice(0, 8) : null,
+    dest: dest ? dest.slice(0, 8) : null,
+    cabin: cabin ? cabin.slice(0, 4) : null,
+    ref: ref ? ref.slice(0, 128) : null,
+    ts: new Date().toISOString(),
+  });
   if (clickLog.length > MAX_LOG) clickLog.shift();
 
   // Redirect to affiliate link or fallback bookingUrl
   // Validate affiliate URL to prevent open redirect via misconfigured env var
   const affiliateUrl = affiliateLinks[program];
-  const url = (affiliateUrl && affiliateUrl.startsWith("https://")) ? affiliateUrl : BOOKING_URLS[program];
-  res.redirect(302, url);
+  const candidate = (affiliateUrl && affiliateUrl.startsWith("https://")) ? affiliateUrl : BOOKING_URLS[program];
+  if (!candidate || !candidate.startsWith("https://")) {
+    return res.status(500).json({ error: "No valid redirect URL for program" });
+  }
+  res.redirect(302, candidate);
 });
 
 router.get("/analytics", (req, res) => {

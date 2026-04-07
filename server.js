@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "url";
 import path from "path";
 import flightsRouter from "./server/routes/flights.js";
+import affiliationRouter from "./server/routes/affiliation.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -42,6 +43,7 @@ app.use("/api/", rateLimit({
 }));
 
 app.use("/api", flightsRouter);
+app.use("/api", affiliationRouter);
 
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));

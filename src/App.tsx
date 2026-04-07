@@ -92,9 +92,9 @@ export default function App() {
 
         {/* HEADER */}
         <div className="text-center pt-8 pb-5">
-          <div className="text-5xl mb-2">🧳</div>
-          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Miles Optimizer</h1>
-          <p className="text-slate-400 text-sm mt-1">{t.tagline}</p>
+          <div className="text-5xl mb-3">🧳</div>
+          <h1 className="text-4xl font-bold tracking-tight gradient-text">Miles Optimizer</h1>
+          <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">{t.tagline}</p>
           <div className="flex items-center justify-center gap-2 mt-3">
             <button
               onClick={() => setLang(lang === "fr" ? "en" : "fr")}
@@ -148,7 +148,7 @@ export default function App() {
               <div className="flex items-end gap-2 mb-3">
                 <AirportPicker label={t.labelDeparture} value={origin} onChange={v => { setOrigin(v); setSearched(false); }} exclude={dest} lang={lang} />
                 <button onClick={handleSwapAndReset} aria-label={t.btnSwap}
-                  className="mb-1 w-10 h-10 rounded-full bg-gray-100 hover:bg-indigo-100 text-gray-600 flex items-center justify-center text-lg transition-all flex-shrink-0 hover:scale-110">
+                  className="mb-1 w-10 h-10 rounded-full bg-white/8 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/40 text-slate-300 flex items-center justify-center text-lg transition-all flex-shrink-0 hover:scale-110 cursor-pointer">
                   ⇄
                 </button>
                 <AirportPicker label={t.labelDestination} value={dest} onChange={v => { setDest(v); setSearched(false); }} exclude={origin} lang={lang} />
@@ -218,7 +218,7 @@ export default function App() {
               <button onClick={handleSearch}
                 disabled={!origin || !dest || origin === dest || loading}
                 aria-label={t.btnSearch}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-bold text-base btn-glow transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                 {loading
                   ? <span className="flex items-center justify-center gap-2"><span className="inline-block animate-spin text-indigo-400">✈️</span>{t.btnSearching}</span>
                   : t.btnSearch}
@@ -351,9 +351,19 @@ export default function App() {
             )}
 
             {!searched && (
-              <div className="text-center py-8 text-indigo-400">
-                <div className="text-4xl mb-3">{t.emptyStateTitle}</div>
-                <p className="text-sm">{t.emptyStateMsg}<br /><span className="text-indigo-300 font-bold">{t.emptyStateCta}</span></p>
+              <div className="text-center py-16 px-4">
+                <div className="w-20 h-20 rounded-3xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center mx-auto mb-5 text-4xl">
+                  {t.emptyStateTitle}
+                </div>
+                <p className="text-slate-300 font-semibold text-base mb-2">{t.emptyStateMsg}</p>
+                <p className="text-indigo-400 text-sm font-medium">{t.emptyStateCta}</p>
+                <div className="mt-8 flex flex-wrap justify-center gap-2">
+                  {["DSS → CDG", "LOS → DXB", "ABJ → IST", "CMN → JFK"].map(route => (
+                    <span key={route} className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-400">
+                      {route}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 

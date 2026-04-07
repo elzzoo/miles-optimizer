@@ -18,23 +18,40 @@ body {
 /* Aurora mesh gradient background */
 .aurora-bg {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 40%, rgba(99,102,241,0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 10%, rgba(139,92,246,0.12) 0%, transparent 55%),
-    radial-gradient(ellipse 70% 60% at 60% 90%, rgba(59,130,246,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 70% at 15% 35%, rgba(99,102,241,0.28) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 60% at 85% 10%, rgba(139,92,246,0.20) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 70% at 55% 95%, rgba(59,130,246,0.16) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 70% 50%, rgba(168,85,247,0.10) 0%, transparent 45%),
     #0f172a;
   min-height: 100vh;
 }
 
 /* Glass card */
 .glass {
-  background: rgba(255,255,255,0.05);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
 }
 
 .glass-hover:hover {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.09);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow button */
+.btn-glow {
+  box-shadow: 0 0 20px rgba(99,102,241,0.35), 0 4px 15px rgba(0,0,0,0.3);
+}
+.btn-glow:hover {
+  box-shadow: 0 0 30px rgba(99,102,241,0.50), 0 4px 20px rgba(0,0,0,0.3);
 }
 
 /* Scrollbar */

@@ -1,6 +1,13 @@
 // RSS feeds for miles & points deals — no API key, no npm package
 // Uses native fetch + lightweight XML regex parsing
 
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 const FEEDS = [
   { url: "https://thepointsguy.com/feed/",            source: "The Points Guy" },
   { url: "https://onemileatatime.com/feed/",           source: "One Mile at a Time" },
@@ -63,10 +70,7 @@ function scoreText(text) {
 
 async function fetchFeed(feed) {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const r = await fetch(feed.url, { signal: controller.signal });
-    clearTimeout(timeout);
+    const r = await fetchWithTimeout(feed.url, {}, 8000);
     if (!r.ok) return [];
     const xml = await r.text();
     return parseRss(xml, feed.source);

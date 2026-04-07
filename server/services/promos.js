@@ -1,5 +1,12 @@
 import { fetchRssPromos } from "./rssFeeds.js";
 
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
 const PROGRAM_MAP = [
@@ -45,7 +52,7 @@ async function fetchSerpApiNews(query) {
       gl: "us",
       api_key: SERPAPI_KEY,
     });
-    const r = await fetch(`https://serpapi.com/search.json?${params}`);
+    const r = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {}, 8000);
     if (!r.ok) return [];
     const data = await r.json();
     return (data.news_results || []).map(item => ({

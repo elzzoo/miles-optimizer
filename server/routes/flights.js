@@ -80,7 +80,8 @@ router.get("/promos", async (req, res) => {
     promosCache = { data, ts: Date.now() };
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: e.message, promos: [] });
+    console.error("[api]", e.message);
+    res.status(500).json({ error: "Service temporairement indisponible", promos: [] });
   }
 });
 
@@ -103,7 +104,8 @@ router.get("/weather", async (req, res) => {
     const data = await getWeather(lat, lon);
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("[api]", e.message);
+    res.status(500).json({ error: "Service temporairement indisponible" });
   }
 });
 
@@ -115,7 +117,8 @@ router.get("/country", async (req, res) => {
     const data = await getCountryInfo(iso2);
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("[api]", e.message);
+    res.status(500).json({ error: "Service temporairement indisponible" });
   }
 });
 

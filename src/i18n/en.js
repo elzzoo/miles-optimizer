@@ -26,6 +26,7 @@ const en = {
   btnSearching: "Searching…",
   btnSwap: "Swap origin and destination",
   btnCopyLink: "Copy link",
+  linkCopied: "Copied! ✅",
 
   // Results header
   routeSummary: (orig, dest, arrow, dist, km, cabin, type, pax) =>

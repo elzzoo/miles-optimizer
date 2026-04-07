@@ -17,6 +17,7 @@ const fr = {
   btnSearching: "Recherche en cours…",
   btnSwap: "Inverser départ et destination",
   btnCopyLink: "Copier le lien",
+  linkCopied: "Copié ! ✅",
   routeSummary: (orig, dest, arrow, dist, km, cabin, type, pax) =>
     [orig, arrow, dest, "·", `${dist} mi · ${km} km`, "·", cabin, "·", type, ...(pax > 1 ? ["·", `${pax} pax`] : [])].join(" "),
   availableFlights: "✈️ Vols disponibles",

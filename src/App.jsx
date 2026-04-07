@@ -45,6 +45,7 @@ export default function App() {
   const [searched, setSearched] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [isWarm, setIsWarm] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { t, lang, setLang } = useTranslation();
   const { currency, setCurrency } = useCurrency();
@@ -92,6 +93,13 @@ export default function App() {
     setSearched(false);
     setSelectedIdx(null);
   }, [origin, dest]);
+
+  const handleCopyLink = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, []);
 
   const bestMiles = milesResults[0];
   const milesSavings = bestMiles?.result ? cashUSD - bestMiles.result.totalUSD : null;
@@ -239,6 +247,16 @@ export default function App() {
                 <span className="text-indigo-200">{isOneWay ? t.oneWayLabel : t.roundTripLabel}</span>
                 {passengers > 1 && <><span className="text-indigo-400">·</span><span className="text-indigo-200">{passengers} pax</span></>}
               </div>
+            </div>
+
+            {/* Copy link button */}
+            <div className="flex justify-center mb-4">
+              <button
+                onClick={handleCopyLink}
+                className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/10 text-indigo-200 hover:bg-white/20 transition-colors border border-white/10"
+              >
+                {copied ? t.linkCopied : t.btnCopyLink}
+              </button>
             </div>
 
             <div className="mb-5">

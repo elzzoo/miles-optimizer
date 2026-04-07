@@ -15,13 +15,32 @@ import { today, addDays } from "./utils/dates.js";
 import { fmt, estimateCash, convert, formatAmount } from "./utils/currency.js";
 import { haversine } from "./utils/distance.js";
 
+// --- URL param + localStorage helpers ---
+const _p = () => new URLSearchParams(window.location.search);
+const _ls = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
+
+function saveSearch(origin, dest, cabin, tripType) {
+  const qs = new URLSearchParams({ from: origin, to: dest, cabin: String(cabin), type: tripType });
+  history.replaceState(null, "", "?" + qs.toString());
+  try {
+    localStorage.setItem("mo-origin", origin);
+    localStorage.setItem("mo-dest", dest);
+    localStorage.setItem("mo-cabin", String(cabin));
+    localStorage.setItem("mo-type", tripType);
+  } catch { /* storage full — ignore */ }
+}
+
 export default function App() {
-  const [origin, setOrigin] = useState("DSS");
-  const [dest, setDest] = useState("IST");
-  const [tripType, setTripType] = useState("round");
+  const [origin, setOrigin] = useState(() => _p().get("from") || _ls("mo-origin", "DSS"));
+  const [dest, setDest] = useState(() => _p().get("to") || _ls("mo-dest", "IST"));
+  const [tripType, setTripType] = useState(() => _p().get("type") || _ls("mo-type", "round"));
   const [depDate, setDepDate] = useState(addDays(today, 30));
   const [retDate, setRetDate] = useState(addDays(today, 40));
-  const [cabin, setCabin] = useState(1);
+  const [cabin, setCabin] = useState(() => {
+    const p = _p();
+    const raw = p.has("cabin") ? Number(p.get("cabin")) : Number(_ls("mo-cabin", 1));
+    return Number.isFinite(raw) ? raw : 1;
+  });
   const [passengers, setPassengers] = useState(1);
   const [searched, setSearched] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(null);
@@ -61,10 +80,11 @@ export default function App() {
     setSearched(true);
     setSelectedIdx(null);
     reset();
+    saveSearch(origin, dest, cabin, tripType);
     const params = new URLSearchParams({ origin, dest, depDate, cabin: String(cabin), passengers: String(passengers) });
     if (!isOneWay) params.set("retDate", retDate);
     search(params);
-  }, [origin, dest, depDate, retDate, cabin, passengers, isOneWay, search, reset]);
+  }, [origin, dest, depDate, retDate, cabin, passengers, tripType, isOneWay, search, reset]);
 
   const handleSwap = useCallback(() => {
     setOrigin(dest);

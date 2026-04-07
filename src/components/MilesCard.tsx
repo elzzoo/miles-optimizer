@@ -18,9 +18,27 @@ interface MilesCardProps {
 }
 
 const RANK_STYLES = {
-  0: { border: "border-yellow-400", bg: "bg-gradient-to-br from-yellow-50 to-amber-50", badge: "🥇", bar: "bg-yellow-400" },
-  1: { border: "border-slate-200", bg: "bg-white", badge: "🥈", bar: "bg-slate-300" },
-  2: { border: "border-orange-200", bg: "bg-white", badge: "🥉", bar: "bg-orange-300" },
+  0: {
+    border: "border-amber-400/50",
+    glow: "shadow-amber-500/10",
+    bar: "bg-gradient-to-r from-amber-400 to-amber-500",
+    badgeBg: "bg-amber-500/20 border-amber-400/30",
+    badgeText: "text-amber-300",
+  },
+  1: {
+    border: "border-slate-500/30",
+    glow: "",
+    bar: "bg-gradient-to-r from-slate-500 to-slate-400",
+    badgeBg: "bg-slate-500/20 border-slate-400/20",
+    badgeText: "text-slate-300",
+  },
+  2: {
+    border: "border-orange-500/30",
+    glow: "",
+    bar: "bg-gradient-to-r from-orange-600 to-orange-400",
+    badgeBg: "bg-orange-500/20 border-orange-400/20",
+    badgeText: "text-orange-300",
+  },
 };
 
 export default function MilesCard({ program, result, rank, cashUSD, isOneWay, rates, currency, t, lang, origin, dest, cabin }: MilesCardProps) {
@@ -54,7 +72,7 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
   const savings = cashUSD - result.totalUSD;
   const savingsPct = Math.round((savings / cashUSD) * 100);
   const isCheaper = savings > 0;
-  const style = RANK_STYLES[rank] || { border: "border-gray-100", bg: "bg-white", badge: "", bar: "" };
+  const style = RANK_STYLES[rank] || { border: "border-white/10", glow: "", bar: "bg-white/20", badgeBg: "bg-white/10 border-white/10", badgeText: "text-slate-400" };
 
   const totalDisplay = formatAmount(convert(result.totalUSD, currency, rates), currency);
   const totalSecondary = currency !== "XOF"
@@ -65,96 +83,109 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
   const cardRoundTrip = t?.cardRoundTrip || "Round trip";
 
   return (
-    <div className={`rounded-2xl border-2 ${style.border} ${style.bg} overflow-hidden transition-all`}>
-      {rank < 3 && <div className={`h-1 ${style.bar}`} />}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2 min-w-0">
-            {style.badge && <span className="text-2xl flex-shrink-0">{style.badge}</span>}
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-lg">{program.emoji}</span>
-                <span className="font-black text-gray-900 text-base">{program.short}</span>
+    <div className={`rounded-2xl border ${style.border} bg-white/5 backdrop-blur-sm overflow-hidden transition-all duration-200 shadow-lg ${style.glow}`}>
+      {/* Rank bar */}
+      <div className={`h-0.5 ${style.bar}`} />
+
+      <div className="p-5">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {rank < 3 && (
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm border ${style.badgeBg}`}>
+                <span className={`font-bold ${style.badgeText}`}>{rank + 1}</span>
               </div>
-              <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${program.allianceBg} ${program.allianceText}`}>{program.alliance}</span>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xl">{program.emoji}</span>
+                <span className="font-bold text-slate-50 text-base">{program.short}</span>
+              </div>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${program.allianceBg} ${program.allianceText} opacity-80`}>
+                {program.alliance}
+              </span>
             </div>
           </div>
           <div className="text-right flex-shrink-0">
-            <div className="text-2xl font-black text-gray-900">{totalDisplay}</div>
-            <div className="text-xs text-gray-400">{totalSecondary}</div>
+            <div className="text-2xl font-bold text-slate-50">{totalDisplay}</div>
+            <div className="text-xs text-slate-500 mt-0.5">{totalSecondary}</div>
             {isCheaper ? (
-              <div className="mt-1 inline-flex items-center gap-1 bg-emerald-100 text-emerald-700 font-black text-sm px-2 py-0.5 rounded-full">
-                -{Math.abs(savingsPct)}% 💰
+              <div className="mt-1.5 inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-400 font-bold text-xs px-2.5 py-1 rounded-full border border-emerald-500/20">
+                -{Math.abs(savingsPct)}% économisé
               </div>
             ) : (
-              <div className="mt-1 inline-flex items-center gap-1 bg-red-50 text-red-500 font-bold text-xs px-2 py-0.5 rounded-full">
+              <div className="mt-1.5 inline-flex items-center gap-1 bg-red-500/10 text-red-400 font-medium text-xs px-2.5 py-1 rounded-full border border-red-500/20">
                 +{fmt.usd(-savings)} vs cash
               </div>
             )}
           </div>
         </div>
 
-        <div
-          className={`rounded-xl p-3 mb-3 cursor-pointer transition-colors ${rank === 0 ? "bg-amber-100 hover:bg-amber-200" : "bg-gray-50 hover:bg-gray-100"}`}
+        {/* Expand toggle */}
+        <button
+          className="w-full rounded-xl p-3 mb-3 cursor-pointer transition-all bg-white/5 hover:bg-white/10 border border-white/8 text-left"
           onClick={() => setExpanded(!expanded)}
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600 font-medium">{isOneWay ? cardOneWay : cardRoundTrip} — {t?.cardViaMiles || "via miles"}</span>
-            <span className="text-xs text-gray-400 font-medium">{expanded ? (t?.cardHide || "▲ hide") : (t?.cardDetails || "▼ details")}</span>
+            <span className="text-sm text-slate-400 font-medium">
+              {isOneWay ? (t?.cardOneWay || "Aller simple") : (t?.cardRoundTrip || "Aller-retour")} — {t?.cardViaMiles || "via miles"}
+            </span>
+            <span className="text-xs text-slate-500">{expanded ? "▲" : "▼"}</span>
           </div>
-        </div>
+        </button>
 
+        {/* Details */}
         {expanded && (
-          <div className="space-y-2 text-sm mb-3">
-            <div className="flex justify-between py-1.5 border-b border-gray-100">
-              <span className="text-gray-500">{t?.cardMilesNeeded || "Miles required"}</span>
-              <span className="font-bold">{fmt.miles(result.milesUsed)}</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-gray-100">
-              <span className="text-gray-500">{t?.cardPricePerMile || "Price per mile"}</span>
-              <span className="font-bold">${result.ppm.toFixed(4)}</span>
-            </div>
+          <div className="space-y-1 text-sm mb-4">
+            {[
+              { label: t?.cardMilesNeeded || "Miles requis", value: fmt.miles(result.milesUsed), bold: true },
+              { label: t?.cardPricePerMile || "Prix par mile", value: `$${result.ppm.toFixed(4)}` },
+              { label: t?.cardMilesCost || "Coût achat miles", value: fmt.usd(result.milesCostUSD) },
+              { label: t?.cardTaxes || "Taxes & frais", value: `~${fmt.usd(result.taxes)}`, extra: program.lowTax ? "text-emerald-400" : "text-amber-400" },
+            ].map(({ label, value, bold, extra }) => (
+              <div key={label} className="flex justify-between py-2 border-b border-white/5">
+                <span className="text-slate-400">{label}</span>
+                <span className={`font-medium text-slate-200 ${extra || ""} ${bold ? "font-bold" : ""}`}>{value}</span>
+              </div>
+            ))}
             {cpp !== null && (
-              <div className="flex justify-between py-1.5 border-b border-gray-100">
-                <span className="text-gray-500">{t?.cppLabel || "Mile value"}</span>
-                <span className={`font-bold text-xs px-2 py-0.5 rounded-full ${cppColor}`}>
+              <div className="flex justify-between py-2 border-b border-white/5">
+                <span className="text-slate-400">{t?.cppLabel || "Valeur du mile"}</span>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  cpp > 2 ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
+                  : cpp > 1 ? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                  : "bg-red-500/10 text-red-400 border border-red-500/20"
+                }`}>
                   {cpp.toFixed(2)}¢ — {cppBenchmark}
                 </span>
               </div>
             )}
-            <div className="flex justify-between py-1.5 border-b border-gray-100">
-              <span className="text-gray-500">{t?.cardMilesCost || "Miles purchase cost"}</span>
-              <span className="font-bold">{fmt.usd(result.milesCostUSD)}</span>
-            </div>
-            <div className="flex justify-between py-1.5 border-b border-gray-100">
-              <span className="text-gray-500">{t?.cardTaxes || "Fees & taxes"}</span>
-              <span className={`font-bold ${program.lowTax ? "text-emerald-600" : "text-orange-500"}`}>
-                ~{fmt.usd(result.taxes)} {program.lowTax ? "✅" : "⚠️"}
-              </span>
-            </div>
-            <div className="flex justify-between py-1.5 rounded-lg bg-gray-50 px-2">
-              <span className="font-bold text-gray-700">{t?.cardTotal || "TOTAL"}</span>
+            <div className="flex justify-between py-2.5 rounded-xl bg-white/5 px-3 mt-1 border border-white/8">
+              <span className="font-bold text-slate-300">{t?.cardTotal || "TOTAL"}</span>
               <div className="text-right">
-                <div className="font-black">{totalDisplay}</div>
-                <div className="text-xs text-gray-400">{totalSecondary}</div>
+                <div className="font-bold text-slate-50">{totalDisplay}</div>
+                <div className="text-xs text-slate-500">{totalSecondary}</div>
               </div>
             </div>
             {isCheaper && (
-              <div className="bg-emerald-50 rounded-lg px-3 py-2 text-center">
-                <span className="text-emerald-700 font-black text-sm">
-                  {t?.cardSavings ? t.cardSavings(fmt.usd(savings), savingsPct) : `Savings: ${fmt.usd(savings)} (${savingsPct}%) 🎉`}
+              <div className="bg-emerald-500/10 rounded-xl px-4 py-2.5 text-center border border-emerald-500/15">
+                <span className="text-emerald-400 font-bold text-sm">
+                  {t?.cardSavings ? t.cardSavings(fmt.usd(savings), savingsPct) : `Économie: ${fmt.usd(savings)} (${savingsPct}%)`}
                 </span>
               </div>
             )}
           </div>
         )}
 
+        {/* Footer */}
         {program.updatedAt && isStale(program.updatedAt) && (
-          <p className="text-xs text-amber-500 mb-1">⚠️ {t?.staleRates || "Rates may be outdated"}</p>
+          <p className="text-xs text-amber-400/70 mb-2">{t?.staleRates || "Tarifs potentiellement obsolètes"}</p>
         )}
-        <p className="text-xs text-gray-400 italic mb-2">{lang === "en" ? (program.notesEn || program.notes) : program.notes}</p>
+        <p className="text-xs text-slate-500 italic mb-3 leading-relaxed">
+          {lang === "en" ? (program.notesEn || program.notes) : program.notes}
+        </p>
         {program.airlines.length > 0 && (
-          <p className="text-xs text-gray-400 mb-3">✈️ {program.airlines.join(" · ")}</p>
+          <p className="text-xs text-slate-500 mb-3">{program.airlines.join(" · ")}</p>
         )}
         {program.bookingUrl && (
           <a
@@ -162,8 +193,9 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors border border-indigo-100">
-            {t?.cardBook || "Book with miles ↗"}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 transition-colors border border-indigo-500/25 cursor-pointer"
+          >
+            {t?.cardBook || "Réserver avec des miles"} ↗
           </a>
         )}
       </div>

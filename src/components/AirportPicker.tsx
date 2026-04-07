@@ -33,44 +33,44 @@ export default function AirportPicker({ label, value, onChange, exclude, lang })
 
   return (
     <div className="relative flex-1" ref={ref}>
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{label}</p>
+      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">{label}</p>
       <div
-        className={`flex items-center gap-3 p-3 rounded-2xl border-2 cursor-pointer transition-all ${open ? "border-indigo-500 bg-indigo-50" : "border-gray-100 bg-gray-50 hover:border-gray-300"}`}
+        className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${open ? "border-indigo-500/60 bg-indigo-500/8" : "border-white/10 bg-white/5 hover:border-white/20"}`}
         onClick={() => { setOpen(!open); setQ(""); }}
       >
         {selected ? (
           <>
             <span className="text-2xl">{selected.flag}</span>
             <div className="min-w-0">
-              <div className="font-black text-gray-900 text-lg leading-none">{selected.code}</div>
-              <div className="text-xs text-gray-400 truncate">{lang === "en" ? (selected.cityEn || selected.city) : selected.city}, {lang === "en" ? (selected.countryEn || selected.country) : selected.country}</div>
+              <div className="font-bold text-slate-50 text-lg leading-none">{selected.code}</div>
+              <div className="text-xs text-slate-400 truncate">{lang === "en" ? (selected.cityEn || selected.city) : selected.city}, {lang === "en" ? (selected.countryEn || selected.country) : selected.country}</div>
             </div>
           </>
-        ) : <span className="text-gray-400 text-sm">Sélectionner...</span>}
+        ) : <span className="text-slate-500 text-sm">Sélectionner...</span>}
       </div>
       {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="p-2 border-b border-gray-100">
+        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-slate-900 rounded-2xl shadow-2xl shadow-black/50 border border-white/10 overflow-hidden">
+          <div className="p-2 border-b border-white/10">
             <input
               autoFocus
-              className="w-full px-3 py-2 rounded-xl bg-gray-50 text-sm outline-none border border-gray-200 focus:border-indigo-400"
+              className="w-full px-3 py-2 rounded-xl bg-white/5 text-slate-100 text-sm outline-none border border-white/10 focus:border-indigo-500/60 placeholder:text-slate-500"
               placeholder="Ville, pays ou code IATA..."
               value={q}
               onChange={e => setQ(e.target.value)}
             />
           </div>
           <div className="max-h-56 overflow-y-auto">
-            {filtered.length === 0 && <p className="text-center text-gray-400 text-sm py-4">Aucun résultat</p>}
+            {filtered.length === 0 && <p className="text-center text-slate-500 text-sm py-4">Aucun résultat</p>}
             {filtered.map(a => (
               <div
                 key={a.code}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 cursor-pointer transition-colors"
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/8 cursor-pointer transition-colors"
                 onClick={() => { onChange(a.code); setOpen(false); }}
               >
                 <span className="text-xl">{a.flag}</span>
                 <div>
-                  <span className="font-bold text-sm text-gray-900">{a.code}</span>
-                  <span className="text-gray-400 text-sm"> — {lang === "en" ? (a.cityEn || a.city) : a.city}, {lang === "en" ? (a.countryEn || a.country) : a.country}</span>
+                  <span className="font-bold text-sm text-slate-100">{a.code}</span>
+                  <span className="text-slate-400 text-sm"> — {lang === "en" ? (a.cityEn || a.city) : a.city}, {lang === "en" ? (a.countryEn || a.country) : a.country}</span>
                 </div>
               </div>
             ))}

@@ -87,25 +87,25 @@ export default function App() {
   const cityName = (a) => a ? (lang === "en" ? (a.cityEn || a.city) : a.city) : "";
 
   return (
-    <div className="min-h-screen pb-12" style={{ background: "linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#0f172a 100%)" }}>
+    <div className="aurora-bg min-h-screen pb-12">
       <div className="max-w-lg mx-auto px-4 lg:max-w-6xl">
 
         {/* HEADER */}
         <div className="text-center pt-8 pb-5">
           <div className="text-5xl mb-2">🧳</div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Miles Optimizer</h1>
-          <p className="text-blue-300 text-sm mt-1">{t.tagline}</p>
+          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Miles Optimizer</h1>
+          <p className="text-slate-400 text-sm mt-1">{t.tagline}</p>
           <div className="flex items-center justify-center gap-2 mt-3">
             <button
               onClick={() => setLang(lang === "fr" ? "en" : "fr")}
-              className="text-xs font-bold px-2.5 py-1 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+              className="bg-white/8 border border-white/10 hover:bg-white/15 text-slate-300 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
               aria-label="Toggle language">
               {t.langToggle}
             </button>
             <select
               value={currency}
               onChange={e => setCurrency(e.target.value)}
-              className="text-xs font-bold px-2.5 py-1 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors border-0 outline-none cursor-pointer"
+              className="bg-white/8 border border-white/10 text-slate-300 text-xs rounded-xl px-3 py-1.5 cursor-pointer outline-none"
               aria-label={t.currencyLabel}>
               <option value="USD">{t.currencyUSD}</option>
               <option value="EUR">{t.currencyEUR}</option>
@@ -124,8 +124,8 @@ export default function App() {
             {/* WARM-UP BANNER */}
             {!isWarm && (
               <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 mb-4 flex items-center gap-3">
-                <span className="animate-spin text-lg">⏳</span>
-                <p className="text-blue-300 text-xs">{t.warmupMsg}</p>
+                <span className="text-indigo-400 animate-pulse text-lg">⏳</span>
+                <p className="text-indigo-400 animate-pulse text-xs">{t.warmupMsg}</p>
               </div>
             )}
 
@@ -133,13 +133,13 @@ export default function App() {
             <PromoBanner />
 
             {/* SEARCH FORM */}
-            <div className="bg-white rounded-3xl shadow-2xl p-5 mb-5">
-              <div className="flex gap-1 bg-gray-100 rounded-2xl p-1 mb-4">
+            <div className="glass rounded-3xl p-5 mb-5">
+              <div className="flex gap-1 bg-white/5 rounded-2xl p-1 mb-4">
                 {[{ val: "round", label: t.roundTrip }, { val: "oneway", label: t.oneWay }].map(({ val, label }) => (
                   <button key={val}
                     onClick={() => { setTripType(val); setSearched(false); }}
                     aria-pressed={tripType === val}
-                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${tripType === val ? "bg-white text-indigo-700 shadow-sm" : "text-gray-400 hover:text-gray-600"}`}>
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${tripType === val ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" : "bg-white/5 text-slate-400 hover:bg-white/10 hover:text-slate-200"}`}>
                     {label}
                   </button>
                 ))}
@@ -156,7 +156,7 @@ export default function App() {
 
               {distMiles > 0 && (
                 <div className="flex justify-center mb-3">
-                  <span className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                  <span className="text-slate-400 text-xs text-center">
                     📏 {distMiles.toLocaleString()} mi · {distKm.toLocaleString()} km
                   </span>
                 </div>
@@ -164,37 +164,37 @@ export default function App() {
 
               <div className={`grid gap-3 mb-4 ${isOneWay ? "grid-cols-1" : "grid-cols-2"}`}>
                 <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t.labelDepart}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t.labelDepart}</p>
                   <input type="date" value={depDate} min={addDays(today, 0)}
                     onChange={e => setDepDate(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-sm focus:border-indigo-400 outline-none" />
+                    className="bg-white/5 border border-white/10 rounded-xl text-slate-200 text-sm px-3 py-2.5 w-full focus:border-indigo-500/60 focus:outline-none" />
                 </div>
                 {!isOneWay && (
                   <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t.labelReturn}</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">{t.labelReturn}</p>
                     <input type="date" value={retDate} min={addDays(depDate, 1)}
                       onChange={e => setRetDate(e.target.value)}
-                      className="w-full p-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-sm focus:border-indigo-400 outline-none" />
+                      className="bg-white/5 border border-white/10 rounded-xl text-slate-200 text-sm px-3 py-2.5 w-full focus:border-indigo-500/60 focus:outline-none" />
                   </div>
                 )}
               </div>
 
               <div className="flex gap-3 mb-5">
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t.labelCabin}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{t.labelCabin}</p>
                   <div className="flex gap-2">
                     {[{ val: 1, icon: "💼", label: t.cabinBusiness }, { val: 0, icon: "🪑", label: t.cabinEco }].map(({ val, icon, label }) => (
                       <button key={val} onClick={() => setCabin(val)} aria-pressed={cabin === val}
-                        className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl font-bold text-sm transition-all ${cabin === val ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                        className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl font-bold text-sm transition-all border ${cabin === val ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"}`}>
                         {icon} {label}
                       </button>
                     ))}
                   </div>
                 </div>
                 <div className="w-28">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{t.labelPassengers}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{t.labelPassengers}</p>
                   <select value={passengers} onChange={e => setPassengers(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-xl border-2 border-gray-100 bg-gray-50 text-sm focus:border-indigo-400 outline-none h-[42px]">
+                    className="w-full bg-white/5 border border-white/10 rounded-xl text-slate-200 text-sm px-3 py-2.5 cursor-pointer outline-none h-[42px]">
                     {[1, 2, 3, 4, 5, 6].map(n => (
                       <option key={n} value={n}>{n} {n > 1 ? t.adultPlural : t.adultSingular}</option>
                     ))}
@@ -204,11 +204,11 @@ export default function App() {
 
           {/* Toggle miles possédés */}
           <div className="flex items-center justify-between mb-4 px-1">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.milesOwnedLabel || "J'ai déjà des miles"}</span>
+            <span className="text-slate-400 text-sm uppercase tracking-wide font-medium">{t.milesOwnedLabel || "J'ai déjà des miles"}</span>
             <button
               type="button"
               onClick={() => setMilesOwned(v => !v)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${milesOwned ? "bg-indigo-600" : "bg-gray-200"}`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${milesOwned ? "bg-indigo-500" : "bg-white/15"}`}
               aria-pressed={milesOwned}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${milesOwned ? "translate-x-6" : "translate-x-1"}`} />
@@ -218,9 +218,9 @@ export default function App() {
               <button onClick={handleSearch}
                 disabled={!origin || !dest || origin === dest || loading}
                 aria-label={t.btnSearch}
-                className={`w-full py-4 rounded-2xl text-white font-black text-base transition-all shadow-lg disabled:opacity-40 disabled:cursor-not-allowed ${loading ? "bg-indigo-400" : "bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5"}`}>
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-bold text-base shadow-lg shadow-indigo-500/25 transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                 {loading
-                  ? <span className="flex items-center justify-center gap-2"><span className="inline-block animate-spin">✈️</span>{t.btnSearching}</span>
+                  ? <span className="flex items-center justify-center gap-2"><span className="inline-block animate-spin text-indigo-400">✈️</span>{t.btnSearching}</span>
                   : t.btnSearch}
               </button>
             </div>
@@ -263,7 +263,7 @@ export default function App() {
 
                 <div className="mb-5">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-white font-bold text-sm">{t.availableFlights}</p>
+                    <p className="text-slate-300 font-semibold text-sm uppercase tracking-widest mb-3">{t.availableFlights}</p>
                     <div className="flex items-center gap-3 text-xs">
                       <span className={`${gLoading ? "text-blue-300 animate-pulse" : googleFlights ? "text-emerald-400" : gError ? "text-red-400" : ""}`}>
                         {gLoading ? t.sourceGoogle : googleFlights ? t.sourceGoogleDone : gError ? t.sourceGoogleFail : ""}
@@ -334,7 +334,7 @@ export default function App() {
                   </div>
                 )}
 
-                <p className="text-indigo-400 text-xs font-bold uppercase tracking-widest mb-3">
+                <p className="text-slate-300 font-semibold text-sm uppercase tracking-widest mb-3">
                   {t.programsTitle(milesResults.length)}
                 </p>
                 <div className="space-y-3">

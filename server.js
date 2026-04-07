@@ -44,17 +44,22 @@ const searchLimit = rateLimit({
   legacyHeaders: false,
   message: { error: "Trop de recherches, réessayez dans une minute." },
 });
-app.use("/api/google-flights", searchLimit);
-app.use("/api/skyscanner", searchLimit);
 
-// Rate limit général pour les autres routes API
-app.use("/api/", rateLimit({
+// Rate limit général pour toutes les autres routes API
+const generalLimit = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Trop de requêtes, réessayez dans une minute." },
-}));
+});
+
+app.use("/api/google-flights", searchLimit);
+app.use("/api/skyscanner", searchLimit);
+app.use("/api/", (req, res, next) => {
+  if (req.path === "/google-flights" || req.path === "/skyscanner") return next();
+  generalLimit(req, res, next);
+});
 
 app.use("/api", flightsRouter);
 app.use("/api", affiliationRouter);

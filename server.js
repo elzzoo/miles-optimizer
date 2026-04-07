@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "url";
 import path from "path";
@@ -8,6 +9,7 @@ import flightsRouter from "./server/routes/flights.js";
 import affiliationRouter from "./server/routes/affiliation.js";
 
 const app = express();
+app.use(compression());
 const PORT = process.env.PORT || 3001;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -48,4 +50,17 @@ app.use("/api", affiliationRouter);
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 
-app.listen(PORT, () => console.log(`✈️  Miles Optimizer — port ${PORT}`));
+app.listen(PORT, async () => {
+  console.log(`✈️  Miles Optimizer — port ${PORT}`);
+  // Pré-charger les caches pour éviter la latence au premier utilisateur
+  try {
+    const { getExchangeRates } = await import("./server/services/exchangeRates.js");
+    await getExchangeRates();
+    console.log("✅ Taux de change pré-chargés");
+  } catch { console.warn("⚠️  Pré-chargement taux échoué"); }
+  try {
+    const { fetchPromos } = await import("./server/services/promos.js");
+    await fetchPromos();
+    console.log("✅ Promos pré-chargées");
+  } catch { console.warn("⚠️  Pré-chargement promos échoué"); }
+});

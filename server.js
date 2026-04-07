@@ -36,6 +36,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Rate limit strict pour les routes de recherche (coûteuses en quota API)
+const searchLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Trop de recherches, réessayez dans une minute." },
+});
+app.use("/api/google-flights", searchLimit);
+app.use("/api/skyscanner", searchLimit);
+
+// Rate limit général pour les autres routes API
 app.use("/api/", rateLimit({
   windowMs: 60 * 1000,
   max: 30,

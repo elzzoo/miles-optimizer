@@ -1,3 +1,10 @@
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 // In-memory airport entity cache (replaces deleted airportCache.js)
 const _cache = new Map();
 const airportCache = { get: (k) => _cache.get(k), set: (k, v) => _cache.set(k, v) };
@@ -14,9 +21,10 @@ async function getEntity(iata) {
 
   // Try exact IATA match first, then city name search as fallback
   for (const query of [iata, iata.toLowerCase()]) {
-    const r = await fetch(
+    const r = await fetchWithTimeout(
       `https://${RAPIDAPI_HOST}/api/v1/flights/searchAirport?query=${query}&locale=en-US`,
-      { headers: RH() }
+      { headers: RH() },
+      8000
     );
     if (!r.ok) {
       const body = await r.text();
@@ -50,9 +58,10 @@ async function pollFlights(params, headers, maxAttempts = 3) {
     const searchParams = new URLSearchParams(params);
     if (sessionId) searchParams.set("sessionId", sessionId);
 
-    const r = await fetch(
+    const r = await fetchWithTimeout(
       `https://${RAPIDAPI_HOST}/api/v2/flights/searchFlights?${searchParams}`,
-      { headers }
+      { headers },
+      8000
     );
 
     if (!r.ok) {

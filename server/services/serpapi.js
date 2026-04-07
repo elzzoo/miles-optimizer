@@ -1,3 +1,10 @@
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 const SERPAPI_KEY = process.env.SERPAPI_KEY;
 
 export async function searchGoogleFlights({ origin, dest, depDate, retDate, cabin, passengers }) {
@@ -16,7 +23,7 @@ export async function searchGoogleFlights({ origin, dest, depDate, retDate, cabi
   });
   if (retDate) params.set("return_date", retDate);
 
-  const r = await fetch(`https://serpapi.com/search.json?${params}`);
+  const r = await fetchWithTimeout(`https://serpapi.com/search.json?${params}`, {}, 8000);
   if (!r.ok) throw new Error(`SerpAPI returned ${r.status}`);
   return r.json();
 }

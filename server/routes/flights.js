@@ -46,7 +46,8 @@ router.get("/google-flights", async (req, res) => {
     setCache(cacheKey, data);
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("[api]", e.message);
+    res.status(500).json({ error: "Service temporairement indisponible" });
   }
 });
 
@@ -61,7 +62,8 @@ router.get("/skyscanner", async (req, res) => {
     setCache(cacheKey, data);
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("[api]", e.message);
+    res.status(500).json({ error: "Service temporairement indisponible" });
   }
 });
 

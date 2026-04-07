@@ -49,6 +49,10 @@ router.get("/go", (req, res) => {
 });
 
 router.get("/analytics", (req, res) => {
+  const key = req.headers["x-analytics-key"];
+  if (!key || key !== process.env.ANALYTICS_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
   res.json({ count: clickLog.length, clicks: clickLog });
 });
 

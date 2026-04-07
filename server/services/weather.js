@@ -1,3 +1,10 @@
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 const TTL = 3 * 60 * 60 * 1000; // 3h
 const cache = new Map();
 
@@ -36,7 +43,7 @@ export async function getWeather(lat, lon) {
     `&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m` +
     `&timezone=auto&forecast_days=1`;
 
-  const r = await fetch(url);
+  const r = await fetchWithTimeout(url, {}, 8000);
   if (!r.ok) throw new Error(`Open-Meteo: ${r.status}`);
   const json = await r.json();
   const c = json.current;

@@ -1,3 +1,10 @@
+function fetchWithTimeout(url, options = {}, ms = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 const TTL = 24 * 60 * 60 * 1000; // 24h — country data rarely changes
 const cache = new Map();
 
@@ -7,7 +14,7 @@ export async function getCountryInfo(iso2) {
   if (hit && Date.now() - hit.ts < TTL) return hit.data;
 
   const url = `https://restcountries.com/v3.1/alpha/${key}?fields=name,capital,currencies,timezones,region,population`;
-  const r = await fetch(url);
+  const r = await fetchWithTimeout(url, {}, 8000);
   if (!r.ok) throw new Error(`REST Countries ${r.status}`);
   const json = await r.json();
 

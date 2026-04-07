@@ -1,8 +1,16 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { Suspense } from "react";
+import * as Sentry from "@sentry/react";
 import "./index.css";
 import App from "./App.jsx";
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  enabled: !!import.meta.env.VITE_SENTRY_DSN,
+  environment: import.meta.env.MODE,
+  tracesSampleRate: 0.1,
+});
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -14,6 +22,7 @@ class ErrorBoundary extends React.Component {
   }
   componentDidCatch(error, info) {
     console.error('[ErrorBoundary]', error, info.componentStack);
+    Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
   render() {
     if (this.state.hasError) {

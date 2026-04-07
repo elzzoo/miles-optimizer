@@ -10,6 +10,8 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@sentry/node": "^10.47.0",
+    "@sentry/react": "^10.47.0",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

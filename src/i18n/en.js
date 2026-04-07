@@ -25,6 +25,9 @@ const en = {
   btnSearch: "🔍 Search flights",
   btnSearching: "Searching…",
   btnSwap: "Swap origin and destination",
+  milesOwnedLabel: "I already have miles",
+  milesOwnedOn: "My miles",
+  milesOwnedOff: "Buy miles",
   btnCopyLink: "Copy link",
   linkCopied: "Copied! ✅",
 

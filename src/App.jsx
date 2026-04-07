@@ -42,6 +42,7 @@ export default function App() {
     return Number.isFinite(raw) ? raw : 1;
   });
   const [passengers, setPassengers] = useState(1);
+  const [milesOwned, setMilesOwned] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [isWarm, setIsWarm] = useState(false);
@@ -57,7 +58,7 @@ export default function App() {
   const distKm = Math.round(distMiles * 1.60934);
 
   const { googleFlights, skyFlights, gLoading, sLoading, gError, sError, loading, allFlights, bestApiPrice, search, reset } = useFlights();
-  const milesResults = useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates });
+  const milesResults = useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates, milesOwned });
 
   useEffect(() => {
     fetch("/api/health").then(() => setIsWarm(true)).catch(() => setIsWarm(true));
@@ -223,6 +224,19 @@ export default function App() {
                   </select>
                 </div>
               </div>
+
+          {/* Toggle miles possédés */}
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.milesOwnedLabel || "J'ai déjà des miles"}</span>
+            <button
+              type="button"
+              onClick={() => setMilesOwned(v => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${milesOwned ? "bg-indigo-600" : "bg-gray-200"}`}
+              aria-pressed={milesOwned}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${milesOwned ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
 
               <button onClick={handleSearch}
                 disabled={!origin || !dest || origin === dest || loading}

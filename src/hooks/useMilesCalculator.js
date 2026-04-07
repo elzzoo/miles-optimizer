@@ -3,7 +3,7 @@ import { PROGRAMS } from "../data/programs.js";
 import { getMilesOW } from "../data/charts.js";
 import { FALLBACK_RATES } from "../utils/currency.js";
 
-export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates }) {
+export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates, milesOwned }) {
   return useMemo(() => {
     const pax = passengers || 1;
     const USD_XOF = rates?.USD_XOF || FALLBACK_RATES.USD_XOF;
@@ -16,7 +16,7 @@ export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, p
 
       const milesPerPax = isOneWay ? milesOW : milesOW * 2;
       const milesUsed = milesPerPax * pax;
-      const ppm = program.pricePMile;
+      const ppm = milesOwned ? 0 : program.pricePMile;
       const milesCostUSD = milesUsed * ppm;
       const taxes = program.taxUSD * pax;
       const totalUSD = milesCostUSD + taxes;
@@ -35,5 +35,5 @@ export function useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, p
     })
     .filter(x => x.result !== null)
     .sort((a, b) => a.result.totalUSD - b.result.totalUSD);
-  }, [origin, dest, cabin, distMiles, isOneWay, passengers, rates]);
+  }, [origin, dest, cabin, distMiles, isOneWay, passengers, rates, milesOwned]);
 }

@@ -16,6 +16,9 @@ const fr = {
   btnSearch: "🔍 Rechercher les vols",
   btnSearching: "Recherche en cours…",
   btnSwap: "Inverser départ et destination",
+  milesOwnedLabel: "J'ai déjà des miles",
+  milesOwnedOn: "Mes miles",
+  milesOwnedOff: "Acheter des miles",
   btnCopyLink: "Copier le lien",
   linkCopied: "Copié ! ✅",
   routeSummary: (orig, dest, arrow, dist, km, cabin, type, pax) =>

@@ -514,6 +514,16 @@ export default function App() {
                   </div>
                 )}
 
+                {/* Estimation notice — shown only when price is not from a live API call */}
+                {!isRealPrice && (
+                  <div className="flex items-start gap-2 mb-4 px-3 py-2.5 rounded-xl bg-amber-500/8 border border-amber-500/20">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-amber-400/70 flex-shrink-0 mt-0.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                    </svg>
+                    <p className="text-amber-300/70 text-xs leading-relaxed">{t.estimateNotice}</p>
+                  </div>
+                )}
+
                 {/* Programs */}
                 <div className="flex items-center gap-2 mb-3">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-indigo-400">

@@ -47,11 +47,12 @@ const en = {
   bothFailedSub: "Estimated prices used for comparison. Try again in a few moments.",
 
   // Cash box
-  priceSelected: "💵 Selected price",
-  priceBest: "💵 Best price found",
-  priceEstimate: "💵 Market estimate",
-  priceSourceReal: (type) => `${type} — Google Flights / Skyscanner`,
-  priceSourceEst: (type, cabin) => `${type} ${cabin} — indicative price`,
+  priceSelected: "Selected price (live)",
+  priceBest: "Best price found (live)",
+  priceEstimate: "Indicative price — unverified",
+  priceSourceReal: (type) => `${type} · source: Google Flights / Skyscanner`,
+  priceSourceEst: (type, cabin) => `${type} ${cabin} · distance-based estimate — search flights for a real price`,
+  estimateNotice: "Results below are based on an estimated price. Search for flights to get accurate figures.",
   oneWayLabel: "One way",
   roundTripLabel: "Round trip",
   businessLabel: "Business",
@@ -83,7 +84,7 @@ const en = {
   cardBook: "Book with miles ↗",
 
   // Disclaimer
-  disclaimer: "Flight prices: Google Flights & Skyscanner in real time. Miles costs: official loyalty program rates. Award seat availability varies — verify on the program's website before buying miles.",
+  disclaimer: "Displayed flight prices are scraped live from Google Flights and Skyscanner at search time. Miles costs are calculated using official loyalty program award charts — actual award seat availability may differ. Always confirm availability on the program's website before buying or transferring miles.",
 
   // Empty state
   emptyStateTitle: "🌍",

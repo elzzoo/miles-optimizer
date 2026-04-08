@@ -49,29 +49,44 @@ export default function AirportPicker({ label, value, onChange, exclude, lang })
         ) : <span className="text-slate-500 text-sm">Sélectionner...</span>}
       </div>
       {open && (
-        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-slate-900 rounded-2xl shadow-2xl shadow-black/50 border border-white/10 overflow-hidden">
-          <div className="p-2 border-b border-white/10">
-            <input
-              autoFocus
-              className="w-full px-3 py-2 rounded-xl bg-white/5 text-slate-100 text-sm outline-none border border-white/10 focus:border-indigo-500/60 placeholder:text-slate-500"
-              placeholder="Ville, pays ou code IATA..."
-              value={q}
-              onChange={e => setQ(e.target.value)}
-            />
+        <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/60 border border-white/10 overflow-hidden animate-slide-down">
+          <div className="p-2 border-b border-white/8">
+            <div className="relative">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              </svg>
+              <input
+                autoFocus
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 text-slate-100 text-sm outline-none border border-white/10 focus:border-indigo-500/60 placeholder:text-slate-500 transition-colors"
+                placeholder="Ville, pays ou code IATA..."
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+            </div>
           </div>
           <div className="max-h-56 overflow-y-auto">
-            {filtered.length === 0 && <p className="text-center text-slate-500 text-sm py-4">Aucun résultat</p>}
+            {filtered.length === 0 && (
+              <div className="text-center py-6">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-slate-600 mx-auto mb-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+                <p className="text-slate-500 text-sm">Aucun résultat</p>
+              </div>
+            )}
             {filtered.map(a => (
               <div
                 key={a.code}
-                className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/8 cursor-pointer transition-colors"
+                className="flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-500/8 cursor-pointer transition-colors group"
                 onClick={() => { onChange(a.code); setOpen(false); }}
               >
-                <span className="text-xl">{a.flag}</span>
-                <div>
-                  <span className="font-bold text-sm text-slate-100">{a.code}</span>
+                <span className="text-xl flex-shrink-0">{a.flag}</span>
+                <div className="min-w-0 flex-1">
+                  <span className="font-bold text-sm text-slate-100 group-hover:text-indigo-300 transition-colors">{a.code}</span>
                   <span className="text-slate-400 text-sm"> — {lang === "en" ? (a.cityEn || a.city) : a.city}, {lang === "en" ? (a.countryEn || a.country) : a.country}</span>
                 </div>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-slate-600 group-hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
               </div>
             ))}
           </div>

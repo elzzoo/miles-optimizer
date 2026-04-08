@@ -250,66 +250,84 @@ export default function App() {
 
             {/* RESULTS */}
             {searched && (
-              <>
-                <div className="flex justify-center mb-5">
-                  <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-white text-sm flex-wrap justify-center">
-                    <span>{origA?.flag} {cityName(origA)}</span>
-                    <span className="text-indigo-300">{isOneWay ? "→" : "⇄"}</span>
-                    <span>{destA?.flag} {cityName(destA)}</span>
-                    <span className="text-indigo-400">·</span>
-                    <span className="text-indigo-200">{distMiles.toLocaleString()} mi · {distKm.toLocaleString()} km</span>
-                    <span className="text-indigo-400">·</span>
-                    <span className="text-indigo-200">{cabin === 1 ? t.cabinBusiness : t.cabinEco}</span>
-                    <span className="text-indigo-400">·</span>
-                    <span className="text-indigo-200">{isOneWay ? t.oneWayLabel : t.roundTripLabel}</span>
-                    {passengers > 1 && <><span className="text-indigo-400">·</span><span className="text-indigo-200">{passengers} pax</span></>}
+              <div className="animate-fade-up">
+                {/* Route summary pill */}
+                <div className="flex items-center justify-between gap-3 mb-5">
+                  <div className="flex items-center gap-2 glass rounded-2xl px-4 py-2.5 text-sm flex-wrap min-w-0">
+                    <span className="font-bold text-slate-100">{origA?.flag} {cityName(origA)}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 text-indigo-400 flex-shrink-0 ${!isOneWay ? "rotate-0" : ""}`}>
+                      {isOneWay
+                        ? <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                        : <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                      }
+                    </svg>
+                    <span className="font-bold text-slate-100">{destA?.flag} {cityName(destA)}</span>
+                    <span className="text-indigo-500 mx-1">·</span>
+                    <span className="text-indigo-300 text-xs">{cabin === 1 ? t.cabinBusiness : t.cabinEco}</span>
+                    <span className="text-indigo-500">·</span>
+                    <span className="text-indigo-300 text-xs">{distMiles.toLocaleString()} mi</span>
+                    {passengers > 1 && <><span className="text-indigo-500">·</span><span className="text-indigo-300 text-xs">{passengers} pax</span></>}
                   </div>
-                </div>
-
-                {/* Copy link button */}
-                <div className="flex justify-center mb-4">
                   <button
                     onClick={handleCopyLink}
-                    className="text-xs font-bold px-3 py-1.5 rounded-full bg-white/10 text-indigo-200 hover:bg-white/20 transition-colors border border-white/10"
+                    title={copied ? t.linkCopied : t.btnCopyLink}
+                    className="flex-shrink-0 w-9 h-9 rounded-xl bg-white/5 border border-white/10 hover:bg-indigo-500/15 hover:border-indigo-500/30 transition-all flex items-center justify-center cursor-pointer"
                   >
-                    {copied ? t.linkCopied : t.btnCopyLink}
+                    {copied
+                      ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-emerald-400"><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                      : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-slate-400"><path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
+                    }
                   </button>
                 </div>
 
+                {/* Flights section */}
                 <div className="mb-5">
                   <div className="flex items-center justify-between mb-3">
-                    <p className="text-slate-300 font-semibold text-sm uppercase tracking-widest mb-3">{t.availableFlights}</p>
+                    <div className="flex items-center gap-2">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-indigo-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                      </svg>
+                      <p className="text-slate-300 font-semibold text-sm uppercase tracking-widest">{t.availableFlights}</p>
+                    </div>
                     <div className="flex items-center gap-3 text-xs">
-                      <span className={`${gLoading ? "text-blue-300 animate-pulse" : googleFlights ? "text-emerald-400" : gError ? "text-red-400" : ""}`}>
+                      <span className={`flex items-center gap-1 ${gLoading ? "text-blue-300" : googleFlights ? "text-emerald-400" : gError ? "text-red-400" : ""}`}>
+                        {gLoading && <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                         {gLoading ? t.sourceGoogle : googleFlights ? t.sourceGoogleDone : gError ? t.sourceGoogleFail : ""}
                       </span>
-                      <span className={`${sLoading ? "text-orange-300 animate-pulse" : skyFlights ? "text-emerald-400" : sError ? "text-red-400" : ""}`}>
+                      <span className={`flex items-center gap-1 ${sLoading ? "text-orange-300" : skyFlights ? "text-emerald-400" : sError ? "text-red-400" : ""}`}>
+                        {sLoading && <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>}
                         {sLoading ? t.sourceSky : skyFlights ? t.sourceSkyDone : sError ? t.sourceSkyFail : ""}
                       </span>
                     </div>
                   </div>
                   {loading && allFlights.length === 0 && <Skeleton />}
                   {allFlights.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 stagger-children">
                       {allFlights.map((f, i) => (
-                        <FlightCard key={i} flight={f} idx={i} source={f.source} selectedIdx={selectedIdx} onSelect={setSelectedIdx} rates={rates} currency={currency} t={t} />
+                        <div key={i} className="animate-fade-up">
+                          <FlightCard flight={f} idx={i} source={f.source} selectedIdx={selectedIdx} onSelect={setSelectedIdx} rates={rates} currency={currency} t={t} />
+                        </div>
                       ))}
                       {selectedIdx !== null && <p className="text-center text-indigo-400 text-xs py-1">{t.selectedNote}</p>}
-                      {oneFailed && <p className="text-center text-yellow-500 text-xs py-1">{t.partialResults(gError ? "Google Flights" : "Skyscanner")}</p>}
+                      {oneFailed && <p className="text-center text-amber-500/80 text-xs py-1">{t.partialResults(gError ? "Google Flights" : "Skyscanner")}</p>}
                     </div>
                   )}
                   {bothFailed && (
-                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+                    <div className="glass rounded-2xl p-5 text-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-red-400/60 mx-auto mb-2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                      </svg>
                       <p className="text-red-300 text-sm font-bold">{t.bothFailedTitle}</p>
-                      <p className="text-indigo-400 text-xs mt-1">{t.bothFailedSub}</p>
+                      <p className="text-slate-400 text-xs mt-1">{t.bothFailedSub}</p>
                     </div>
                   )}
                 </div>
 
-                <div className="glass rounded-2xl px-4 py-3 mb-4">
+                {/* Price reference card */}
+                <div className="glass rounded-2xl px-4 py-4 mb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-white font-bold text-sm">
+                      <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold mb-0.5">
                         {isRealPrice ? (selectedFlightPrice ? t.priceSelected : t.priceBest) : t.priceEstimate}
                       </p>
                       <p className="text-indigo-300 text-xs">
@@ -319,37 +337,42 @@ export default function App() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-white font-black text-2xl">{cashDisplay}</div>
-                      <div className="text-indigo-300 text-xs">{cashSecondary}</div>
+                      <div className="text-white font-black text-3xl tracking-tight">{cashDisplay}</div>
+                      <div className="text-slate-500 text-xs mt-0.5">{cashSecondary}</div>
                     </div>
                   </div>
                 </div>
 
+                {/* Best option banner */}
                 {bestMiles && milesSavings !== null && (
-                  <div className={`rounded-2xl px-4 py-4 mb-5 ${milesSavings > 0 ? "bg-emerald-500/20 border border-emerald-400/40" : "bg-slate-500/20 border border-slate-400/30"}`}>
+                  <div className={`rounded-2xl px-4 py-4 mb-5 ${milesSavings > 0 ? "bg-emerald-500/15 border border-emerald-500/25" : "bg-slate-800/60 border border-white/10"}`}>
                     <div className="flex items-start gap-3">
                       {milesSavings > 0 ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-emerald-400 flex-shrink-0">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
-                        </svg>
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-emerald-400">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                          </svg>
+                        </div>
                       ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-slate-400 flex-shrink-0">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                        </svg>
+                        <div className="w-9 h-9 rounded-xl bg-white/8 border border-white/10 flex items-center justify-center flex-shrink-0">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-slate-400">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                          </svg>
+                        </div>
                       )}
                       <div>
                         {milesSavings > 0 ? (
                           <>
-                            <p className="text-emerald-300 font-black text-base">{t.bestOptionMiles}</p>
-                            <p className="text-white font-bold">
+                            <p className="text-emerald-300 font-bold text-sm">{t.bestOptionMiles}</p>
+                            <p className="text-white font-semibold text-sm">
                               {t.viaProgram(bestMiles.program.short)} — <span className="text-emerald-300">{t.savingsText(fmt.usd(milesSavings), Math.round((milesSavings / cashUSD) * 100))}</span>
                             </p>
-                            <p className="text-indigo-300 text-xs mt-1">{t.milesPlusTax(fmt.miles(bestMiles.result.milesUsed), fmt.usd(bestMiles.result.taxes))}</p>
+                            <p className="text-slate-400 text-xs mt-1">{t.milesPlusTax(fmt.miles(bestMiles.result.milesUsed), fmt.usd(bestMiles.result.taxes))}</p>
                           </>
                         ) : (
                           <>
-                            <p className="text-slate-300 font-black text-base">{t.bestOptionCash}</p>
-                            <p className="text-white text-sm"><span className="text-orange-300 font-bold">{t.costMoreCash(fmt.usd(-milesSavings))}</span></p>
+                            <p className="text-slate-300 font-bold text-sm">{t.bestOptionCash}</p>
+                            <p className="text-white text-sm"><span className="text-amber-300 font-semibold">{t.costMoreCash(fmt.usd(-milesSavings))}</span></p>
                           </>
                         )}
                       </div>
@@ -357,25 +380,31 @@ export default function App() {
                   </div>
                 )}
 
-                <p className="text-slate-300 font-semibold text-sm uppercase tracking-widest mb-3">
-                  {t.programsTitle(milesResults.length)}
-                </p>
+                {/* Programs section */}
+                <div className="flex items-center gap-2 mb-3">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-indigo-400">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
+                  </svg>
+                  <p className="text-slate-300 font-semibold text-sm uppercase tracking-widest">
+                    {t.programsTitle(milesResults.length)}
+                  </p>
+                </div>
                 <div className="space-y-3">
                   {milesResults.map(({ program, result }, i) => (
                     <MilesCard key={program.id} program={program} result={result} rank={i} cashUSD={cashUSD} isOneWay={isOneWay} rates={rates} currency={currency} t={t} lang={lang} origin={origin} dest={dest} cabin={cabin} />
                   ))}
                 </div>
 
-                <div className="mt-6 rounded-2xl bg-white/5 border border-white/10 p-4 text-indigo-400 text-xs leading-relaxed">
-                  <p className="font-bold text-indigo-300 mb-1">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 inline mr-1 text-amber-400">
+                <div className="mt-6 rounded-2xl bg-white/4 border border-white/8 p-4 text-slate-500 text-xs leading-relaxed">
+                  <p className="font-semibold text-slate-400 mb-1 flex items-center gap-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-amber-500/70">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                     </svg>
                     {lang === "en" ? "Disclaimer" : "À savoir"}
                   </p>
                   <p>{t.disclaimer}</p>
                 </div>
-              </>
+              </div>
             )}
 
             {!searched && (

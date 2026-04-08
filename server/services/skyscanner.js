@@ -24,7 +24,7 @@ async function getEntity(iata) {
     const r = await fetchWithTimeout(
       `https://${RAPIDAPI_HOST}/api/v1/flights/searchAirport?query=${query}&locale=en-US`,
       { headers: RH() },
-      8000
+      12000
     );
     if (!r.ok) {
       const body = await r.text();
@@ -38,6 +38,10 @@ async function getEntity(iata) {
 
     // Try exact skyId match first
     let match = j.data.find(a => a.navigation?.relevantFlightParams?.skyId === iata);
+    // Fallback: case-insensitive match
+    if (!match) match = j.data.find(a =>
+      a.navigation?.relevantFlightParams?.skyId?.toUpperCase() === iata.toUpperCase()
+    );
     // Fallback: first result that has a skyId
     if (!match) match = j.data.find(a => a.navigation?.relevantFlightParams?.skyId);
 
@@ -61,7 +65,7 @@ async function pollFlights(params, headers, maxAttempts = 3) {
     const r = await fetchWithTimeout(
       `https://${RAPIDAPI_HOST}/api/v2/flights/searchFlights?${searchParams}`,
       { headers },
-      8000
+      12000
     );
 
     if (!r.ok) {
@@ -77,6 +81,8 @@ async function pollFlights(params, headers, maxAttempts = 3) {
     if (data.sessionId) sessionId = data.sessionId;
 
     const status = data.data?.context?.status || data.status;
+    const count = data.data?.itineraries?.length || 0;
+    console.log(`[skyscanner] attempt ${attempt+1}: status=${status} itineraries=${count}`);
 
     // If complete or has itineraries, return
     if (status === "complete" || (data.data?.itineraries?.length > 0)) {
@@ -96,6 +102,7 @@ async function pollFlights(params, headers, maxAttempts = 3) {
 
 export async function searchSkyscanner({ origin, dest, depDate, retDate, cabin, passengers }) {
   if (!RAPIDAPI_KEY) throw new Error("RAPIDAPI_KEY not configured");
+  console.log(`[skyscanner] search ${origin}→${dest} dep=${depDate} cabin=${cabin}`);
 
   const [origE, destE] = await Promise.all([getEntity(origin), getEntity(dest)]);
 

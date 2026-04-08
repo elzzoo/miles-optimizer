@@ -22,7 +22,11 @@ export default function PromoBanner() {
     return (
       <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4 mb-4">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-yellow-400 text-xs font-bold uppercase tracking-widest">🔥 Actualités promos miles</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-400 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+          </svg>
+          <span className="text-yellow-400 text-xs font-bold uppercase tracking-widest">Actualités promos miles</span>
         </div>
         <div className="animate-pulse flex gap-2">
           {[1,2,3].map(i => <div key={i} className="h-16 flex-1 rounded-xl bg-white/5" />)}
@@ -34,7 +38,13 @@ export default function PromoBanner() {
   if (error || promos.length === 0) {
     return (
       <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4 mb-4">
-        <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest mb-2">🔥 Actualités promos miles</p>
+        <p className="text-yellow-400 text-xs font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+          </svg>
+          Actualités promos miles
+        </p>
         <p className="text-indigo-400 text-xs">Aucune actualité promo trouvée pour le moment.</p>
       </div>
     );
@@ -43,7 +53,13 @@ export default function PromoBanner() {
   return (
     <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-4 mb-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-yellow-300 text-xs font-bold uppercase tracking-widest">🔥 Actualités promos miles</p>
+        <p className="text-yellow-300 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+          </svg>
+          Actualités promos miles
+        </p>
         {fetchedAt && (
           <span className="text-indigo-500 text-xs">Actualisé {timeAgo(fetchedAt)}</span>
         )}
@@ -57,8 +73,14 @@ export default function PromoBanner() {
             rel="noopener noreferrer"
             className="flex items-start gap-3 p-2.5 rounded-xl bg-white/5 hover:bg-white/10 transition-colors border border-white/5 cursor-pointer group"
           >
-            <div className="text-xl flex-shrink-0 mt-0.5">
-              {item.programId ? PROGRAM_EMOJI[item.programId] || "✈️" : "✈️"}
+            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+              {item.programId && PROGRAM_EMOJI[item.programId] ? (
+                <span className="text-sm">{PROGRAM_EMOJI[item.programId]}</span>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-indigo-400">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                </svg>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-white text-xs font-semibold leading-snug line-clamp-2 group-hover:text-yellow-200 transition-colors">

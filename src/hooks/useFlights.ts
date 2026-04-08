@@ -21,19 +21,23 @@ function parseGoogleFlights(data: unknown): Flight[] {
 
 function parseSkyFlights(data: unknown): Flight[] {
   if (!data) return [];
-  const its = data.data?.itineraries || [];
+  // Support both response shapes: data.data.itineraries and data.itineraries
+  const its = (data as any).data?.itineraries
+    || (data as any).itineraries
+    || (data as any).data?.results?.itineraries
+    || [];
   return its
-    .map(it => ({
+    .map((it: any) => ({
       price: it.price?.raw,
       airline: it.legs?.[0]?.carriers?.marketing?.[0]?.name || "—",
       direct: (it.legs?.[0]?.stopCount || 0) === 0,
       stops: it.legs?.[0]?.stopCount || 0,
       duration: it.legs?.[0]?.durationInMinutes,
       depTime: it.legs?.[0]?.departure,
-      source: "sky",
+      source: "sky" as const,
     }))
-    .filter(f => f.price)
-    .sort((a, b) => a.price - b.price)
+    .filter((f: any) => f.price)
+    .sort((a: any, b: any) => a.price - b.price)
     .slice(0, 5);
 }
 
@@ -54,13 +58,19 @@ export function useFlights() {
     setSLoading(true);
 
     fetch(`/api/google-flights?${params}`)
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(d => { setGoogleFlights(d); setGLoading(false); })
+      .then(r => r.json().then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) throw new Error(d.error || `HTTP ${d.status}`);
+        setGoogleFlights(d); setGLoading(false);
+      })
       .catch(e => { setGError(e.message); setGLoading(false); });
 
     fetch(`/api/skyscanner?${params}`)
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(d => { setSkyFlights(d); setSLoading(false); })
+      .then(r => r.json().then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) throw new Error(d.error || `HTTP ${d.status}`);
+        setSkyFlights(d); setSLoading(false);
+      })
       .catch(e => { setSError(e.message); setSLoading(false); });
   }, []);
 

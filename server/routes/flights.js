@@ -46,8 +46,11 @@ router.get("/google-flights", async (req, res) => {
     setCache(cacheKey, data);
     res.json(data);
   } catch (e) {
-    console.error("[api]", e.message);
-    res.status(500).json({ error: "Service temporairement indisponible" });
+    console.error("[google-flights]", e.message, e.stack?.split('\n')[1]);
+    const userMsg = e.message.includes("introuvable")
+      ? e.message
+      : `Service Google Flights temporairement indisponible: ${e.message}`;
+    res.status(500).json({ error: userMsg });
   }
 });
 
@@ -62,8 +65,15 @@ router.get("/skyscanner", async (req, res) => {
     setCache(cacheKey, data);
     res.json(data);
   } catch (e) {
-    console.error("[api]", e.message);
-    res.status(500).json({ error: "Service temporairement indisponible" });
+    console.error("[skyscanner]", e.message, e.stack?.split('\n')[1]);
+    const userMsg = e.message.includes("Abonnement") || e.message.includes("not subscribed")
+      ? "Abonnement RapidAPI expiré — vérifiez sky-scrapper sur rapidapi.com"
+      : e.message.includes("RAPIDAPI_KEY")
+      ? "Clé RapidAPI non configurée (RAPIDAPI_KEY)"
+      : e.message.includes("introuvable")
+      ? e.message
+      : "Service Skyscanner temporairement indisponible";
+    res.status(500).json({ error: userMsg });
   }
 });
 

@@ -64,11 +64,6 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
     : cpp > 1 ? (t?.cppGood || "Good (1-2¢)")
     : (t?.cppLow || "Low (<1¢)");
 
-  const cppColor = cpp === null ? ""
-    : cpp > 2 ? "text-emerald-700 bg-emerald-50"
-    : cpp > 1 ? "text-amber-700 bg-amber-50"
-    : "text-red-600 bg-red-50";
-
   const savings = cashUSD - result.totalUSD;
   const savingsPct = Math.round((savings / cashUSD) * 100);
   const isCheaper = savings > 0;
@@ -98,7 +93,11 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
             )}
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xl">{program.emoji}</span>
+                <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4.5 h-4.5 text-indigo-400">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                  </svg>
+                </div>
                 <span className="font-bold text-slate-50 text-base">{program.short}</span>
               </div>
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block ${program.allianceBg} ${program.allianceText} opacity-80`}>
@@ -130,7 +129,9 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
             <span className="text-sm text-slate-400 font-medium">
               {isOneWay ? (t?.cardOneWay || "Aller simple") : (t?.cardRoundTrip || "Aller-retour")} — {t?.cardViaMiles || "via miles"}
             </span>
-            <span className="text-xs text-slate-500">{expanded ? "▲" : "▼"}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
           </div>
         </button>
 

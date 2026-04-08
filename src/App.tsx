@@ -92,7 +92,11 @@ export default function App() {
 
         {/* HEADER */}
         <div className="text-center pt-8 pb-5">
-          <div className="text-5xl mb-3">🧳</div>
+          <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-indigo-400">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+            </svg>
+          </div>
           <h1 className="text-4xl font-bold tracking-tight gradient-text">Miles Optimizer</h1>
           <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">{t.tagline}</p>
           <div className="flex items-center justify-center gap-2 mt-3">
@@ -124,7 +128,10 @@ export default function App() {
             {/* WARM-UP BANNER */}
             {!isWarm && (
               <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 mb-4 flex items-center gap-3">
-                <span className="text-indigo-400 animate-pulse text-lg">⏳</span>
+                <svg className="animate-spin w-4 h-4 text-indigo-400 flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
                 <p className="text-indigo-400 animate-pulse text-xs">{t.warmupMsg}</p>
               </div>
             )}
@@ -148,16 +155,21 @@ export default function App() {
               <div className="flex items-end gap-2 mb-3">
                 <AirportPicker label={t.labelDeparture} value={origin} onChange={v => { setOrigin(v); setSearched(false); }} exclude={dest} lang={lang} />
                 <button onClick={handleSwapAndReset} aria-label={t.btnSwap}
-                  className="mb-1 w-10 h-10 rounded-full bg-white/8 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/40 text-slate-300 flex items-center justify-center text-lg transition-all flex-shrink-0 hover:scale-110 cursor-pointer">
-                  ⇄
+                  className="mb-1 w-10 h-10 rounded-full bg-white/8 border border-white/10 hover:bg-indigo-500/20 hover:border-indigo-500/40 text-slate-300 flex items-center justify-center transition-all flex-shrink-0 hover:scale-110 cursor-pointer">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                  </svg>
                 </button>
                 <AirportPicker label={t.labelDestination} value={dest} onChange={v => { setDest(v); setSearched(false); }} exclude={origin} lang={lang} />
               </div>
 
               {distMiles > 0 && (
                 <div className="flex justify-center mb-3">
-                  <span className="text-slate-400 text-xs text-center">
-                    📏 {distMiles.toLocaleString()} mi · {distKm.toLocaleString()} km
+                  <span className="inline-flex items-center gap-1 text-slate-400 text-xs">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m0 0L3 21m4.5-4.5H21" />
+                    </svg>
+                    {distMiles.toLocaleString()} mi · {distKm.toLocaleString()} km
                   </span>
                 </div>
               )}
@@ -183,7 +195,10 @@ export default function App() {
                 <div className="flex-1">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{t.labelCabin}</p>
                   <div className="flex gap-2">
-                    {[{ val: 1, icon: "💼", label: t.cabinBusiness }, { val: 0, icon: "🪑", label: t.cabinEco }].map(({ val, icon, label }) => (
+                    {[
+                      { val: 1, label: t.cabinBusiness, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" /></svg> },
+                      { val: 0, label: t.cabinEco, icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5" /></svg> },
+                    ].map(({ val, icon, label }) => (
                       <button key={val} onClick={() => setCabin(val)} aria-pressed={cabin === val}
                         className={`flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl font-bold text-sm transition-all border ${cabin === val ? "bg-indigo-500/20 border-indigo-500/50 text-indigo-300" : "bg-white/5 border-white/10 text-slate-400 hover:bg-white/10"}`}>
                         {icon} {label}
@@ -220,7 +235,7 @@ export default function App() {
                 aria-label={t.btnSearch}
                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-bold text-base btn-glow transition-all duration-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                 {loading
-                  ? <span className="flex items-center justify-center gap-2"><span className="inline-block animate-spin text-indigo-400">✈️</span>{t.btnSearching}</span>
+                  ? <span className="flex items-center justify-center gap-2"><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>{t.btnSearching}</span>
                   : t.btnSearch}
               </button>
             </div>
@@ -237,7 +252,7 @@ export default function App() {
             {searched && (
               <>
                 <div className="flex justify-center mb-5">
-                  <div className="flex items-center gap-2 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-full px-4 py-2 text-white text-sm flex-wrap justify-center">
+                  <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-2 text-white text-sm flex-wrap justify-center">
                     <span>{origA?.flag} {cityName(origA)}</span>
                     <span className="text-indigo-300">{isOneWay ? "→" : "⇄"}</span>
                     <span>{destA?.flag} {cityName(destA)}</span>
@@ -284,14 +299,14 @@ export default function App() {
                     </div>
                   )}
                   {bothFailed && (
-                    <div className="bg-white bg-opacity-5 border border-white border-opacity-10 rounded-2xl p-4 text-center">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
                       <p className="text-red-300 text-sm font-bold">{t.bothFailedTitle}</p>
                       <p className="text-indigo-400 text-xs mt-1">{t.bothFailedSub}</p>
                     </div>
                   )}
                 </div>
 
-                <div className="rounded-2xl bg-white bg-opacity-10 border border-white border-opacity-20 px-4 py-3 mb-4">
+                <div className="glass rounded-2xl px-4 py-3 mb-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-white font-bold text-sm">
@@ -311,9 +326,17 @@ export default function App() {
                 </div>
 
                 {bestMiles && milesSavings !== null && (
-                  <div className={`rounded-2xl px-4 py-4 mb-5 ${milesSavings > 0 ? "bg-emerald-500 bg-opacity-20 border border-emerald-400 border-opacity-40" : "bg-slate-500 bg-opacity-20 border border-slate-400 border-opacity-30"}`}>
+                  <div className={`rounded-2xl px-4 py-4 mb-5 ${milesSavings > 0 ? "bg-emerald-500/20 border border-emerald-400/40" : "bg-slate-500/20 border border-slate-400/30"}`}>
                     <div className="flex items-start gap-3">
-                      <span className="text-3xl">{milesSavings > 0 ? "💡" : "💳"}</span>
+                      {milesSavings > 0 ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-emerald-400 flex-shrink-0">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.383a14.406 14.406 0 0 1-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 1 0-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-slate-400 flex-shrink-0">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                        </svg>
+                      )}
                       <div>
                         {milesSavings > 0 ? (
                           <>
@@ -343,8 +366,13 @@ export default function App() {
                   ))}
                 </div>
 
-                <div className="mt-6 rounded-2xl bg-white bg-opacity-5 border border-white border-opacity-10 p-4 text-indigo-400 text-xs leading-relaxed">
-                  <p className="font-bold text-indigo-300 mb-1">⚠️ {lang === "en" ? "Disclaimer" : "À savoir"}</p>
+                <div className="mt-6 rounded-2xl bg-white/5 border border-white/10 p-4 text-indigo-400 text-xs leading-relaxed">
+                  <p className="font-bold text-indigo-300 mb-1">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 inline mr-1 text-amber-400">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                    {lang === "en" ? "Disclaimer" : "À savoir"}
+                  </p>
                   <p>{t.disclaimer}</p>
                 </div>
               </>
@@ -352,8 +380,10 @@ export default function App() {
 
             {!searched && (
               <div className="text-center py-16 px-4">
-                <div className="w-20 h-20 rounded-3xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center mx-auto mb-5 text-4xl">
-                  {t.emptyStateTitle}
+                <div className="w-20 h-20 rounded-3xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center mx-auto mb-5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-9 h-9 text-indigo-400">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                  </svg>
                 </div>
                 <p className="text-slate-300 font-semibold text-base mb-2">{t.emptyStateMsg}</p>
                 <p className="text-indigo-400 text-sm font-medium">{t.emptyStateCta}</p>

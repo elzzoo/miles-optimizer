@@ -3,6 +3,7 @@ import AirportPicker from "./components/AirportPicker.jsx";
 import FlightCard from "./components/FlightCard.jsx";
 import MilesCard from "./components/MilesCard.jsx";
 import Skeleton from "./components/Skeleton.jsx";
+import PriceCalendar from "./components/PriceCalendar.jsx";
 import PromoBanner from "./components/PromoBanner.jsx";
 import DestinationCard from "./components/DestinationCard.jsx";
 import { useFlights } from "./hooks/useFlights.js";
@@ -62,11 +63,28 @@ export default function App() {
     if (retDate <= depDate) setRetDate(addDays(depDate, 7));
   }, [depDate]);
 
+  // Reset selectedIdx si le vol sélectionné est filtré
+  useEffect(() => {
+    if (selectedIdx !== null) {
+      const stillVisible = filteredFlights.some((_, i) => i === selectedIdx) ||
+        filteredFlights.find(f => f === allFlights[selectedIdx]);
+      if (!stillVisible) setSelectedIdx(null);
+    }
+  }, [filteredFlights]);
+
   const selectedFlightPrice = selectedIdx !== null ? allFlights[selectedIdx]?.price : null;
+
+  // Meilleur prix parmi les vols FILTRÉS (pas tous les vols)
+  const filteredBestPrice = useMemo(() => {
+    const prices = filteredFlights.map(f => f.price).filter(Boolean);
+    return prices.length > 0 ? Math.min(...prices) : null;
+  }, [filteredFlights]);
+
   const [estEco, estBus] = useMemo(() => estimateCash(distMiles, isOneWay), [distMiles, isOneWay]);
   const estPrice = cabin === 1 ? estBus : estEco;
-  const cashUSD = selectedFlightPrice ?? bestApiPrice ?? estPrice;
-  const isRealPrice = !!(selectedFlightPrice || bestApiPrice);
+  // Priorité : vol sélectionné > meilleur filtré > estimation
+  const cashUSD = selectedFlightPrice ?? filteredBestPrice ?? estPrice;
+  const isRealPrice = !!(selectedFlightPrice || filteredBestPrice);
 
   const cashDisplay = formatAmount(convert(cashUSD, currency, rates), currency);
   const cashSecondary = currency !== "XOF" ? fmt.xof(cashUSD * rates.USD_XOF) : fmt.usd(cashUSD);
@@ -237,6 +255,16 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Calendrier des prix */}
+            {distMiles > 0 && (
+              <PriceCalendar
+                depDate={depDate}
+                onSelect={date => { setDepDate(date); setSearched(false); }}
+                estimateBase={cabin === 1 ? estBus : estEco}
+                isOneWay={isOneWay}
+              />
+            )}
 
             {/* Cabin + Passengers */}
             <div className="flex gap-3 mb-4">

@@ -48,6 +48,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // Prevent service worker from intercepting API routes opened as navigations
+        // (e.g. /api/go redirect for booking links, opened in a new tab)
+        navigateFallbackDenylist: [/^\/api\//],
       },
     }),
   ],

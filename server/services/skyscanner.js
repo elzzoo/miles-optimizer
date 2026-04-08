@@ -28,8 +28,9 @@ async function getEntity(iata) {
     );
     if (!r.ok) {
       const body = await r.text();
-      if (body.includes("not subscribed")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
-      throw new Error(`Airport lookup returned ${r.status}`);
+      if (r.status === 429 || body.includes("Too Many Requests") || body.includes("exceeded")) throw new Error("Quota RapidAPI dépassé — limite mensuelle atteinte sur sky-scrapper (plan gratuit)");
+      if (body.includes("not subscribed") || body.includes("subscribe")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
+      throw new Error(`Airport lookup returned ${r.status}: ${body.slice(0, 120)}`);
     }
 
     const j = await r.json();
@@ -70,7 +71,8 @@ async function pollFlights(params, headers, maxAttempts = 3) {
 
     if (!r.ok) {
       const body = await r.text();
-      if (body.includes("not subscribed")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
+      if (r.status === 429 || body.includes("Too Many Requests") || body.includes("exceeded")) throw new Error("Quota RapidAPI dépassé — limite mensuelle atteinte sur sky-scrapper (plan gratuit)");
+      if (body.includes("not subscribed") || body.includes("subscribe")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
       throw new Error(`Skyscanner returned ${r.status}: ${body.slice(0, 200)}`);
     }
 

@@ -66,13 +66,15 @@ router.get("/skyscanner", async (req, res) => {
     res.json(data);
   } catch (e) {
     console.error("[skyscanner]", e.message, e.stack?.split('\n')[1]);
-    const userMsg = e.message.includes("Abonnement") || e.message.includes("not subscribed")
+    const userMsg = e.message.includes("Quota") || e.message.includes("exceeded") || e.message.includes("429")
+      ? "Quota RapidAPI dépassé — limite mensuelle atteinte (plan gratuit sky-scrapper)"
+      : e.message.includes("Abonnement") || e.message.includes("not subscribed")
       ? "Abonnement RapidAPI expiré — vérifiez sky-scrapper sur rapidapi.com"
       : e.message.includes("RAPIDAPI_KEY")
       ? "Clé RapidAPI non configurée (RAPIDAPI_KEY)"
       : e.message.includes("introuvable")
       ? e.message
-      : "Service Skyscanner temporairement indisponible";
+      : `Service Skyscanner indisponible: ${e.message.slice(0, 120)}`;
     res.status(500).json({ error: userMsg });
   }
 });

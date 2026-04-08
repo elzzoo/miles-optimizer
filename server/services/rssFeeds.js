@@ -34,25 +34,52 @@ const SCORE_SIGNALS = [
   { words: ["miles", "points", "avios", "award"],                     score: 1 },
 ];
 
+// Extract text content of an XML tag, handling CDATA and attributes
 function extractTag(xml, tag) {
+  // Try CDATA and regular content
   const m = xml.match(new RegExp(`<${tag}[^>]*>(?:<!\\[CDATA\\[)?([\\s\\S]*?)(?:\\]\\]>)?<\\/${tag}>`, "i"));
-  return m ? m[1].trim() : "";
+  if (m) return m[1].trim();
+  return "";
 }
 
-function parseRss(xml, sourceName) {
-  const items = [];
-  const itemRe = /<item>([\s\S]*?)<\/item>/gi;
-  let m;
-  while ((m = itemRe.exec(xml)) !== null && items.length < 15) {
-    const block = m[1];
-    const title = extractTag(block, "title");
-    const link = extractTag(block, "link") || extractTag(block, "guid");
-    const pubDate = extractTag(block, "pubDate");
-    const raw = extractTag(block, "description");
-    const snippet = raw.replace(/<[^>]+>/g, "").slice(0, 120).trim();
-    if (title) items.push({ title, link, date: pubDate, snippet, source: sourceName });
+// Extract link: tries <link>url</link>, then <link href="url"/>, then <guid>
+function extractLink(block) {
+  // Standard RSS <link>url</link>
+  const textLink = extractTag(block, "link");
+  if (textLink && isValidUrl(textLink)) return textLink;
+
+  // Atom-style <link href="url" .../>
+  const attrMatch = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/>/i);
+  if (attrMatch && isValidUrl(attrMatch[1])) return attrMatch[1];
+
+  // Fallback: <guid isPermaLink="true">url</guid>
+  const guid = extractTag(block, "guid");
+  if (guid && isValidUrl(guid)) return guid;
+
+  return "";
+}
+
+function isValidUrl(str) {
+  if (!str) return false;
+  const s = str.trim();
+  return s.startsWith("http://") || s.startsWith("https://");
+}
+
+// Canonical URL: strip query params (UTM etc), lowercase hostname, no trailing slash
+function canonicalUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    return (u.hostname + u.pathname).toLowerCase().replace(/\/$/, "");
+  } catch {
+    return urlStr.toLowerCase().trim();
   }
-  return items;
+}
+
+// Parse RSS pubDate to timestamp (ms). Returns null if unparseable.
+function parsePubDate(dateStr) {
+  if (!dateStr) return null;
+  const ts = Date.parse(dateStr);
+  return isNaN(ts) ? null : ts;
 }
 
 function detectProgram(text) {
@@ -68,6 +95,25 @@ function scoreText(text) {
   return SCORE_SIGNALS.reduce((t, s) => t + (s.words.some(w => lower.includes(w)) ? s.score : 0), 0);
 }
 
+function parseRss(xml, sourceName) {
+  const items = [];
+  const itemRe = /<item>([\s\S]*?)<\/item>/gi;
+  let m;
+  while ((m = itemRe.exec(xml)) !== null && items.length < 15) {
+    const block = m[1];
+    const title = extractTag(block, "title");
+    if (!title) continue;
+
+    const link = extractLink(block);
+    const pubDate = extractTag(block, "pubDate");
+    const raw = extractTag(block, "description");
+    const snippet = raw.replace(/<[^>]+>/g, "").slice(0, 120).trim();
+
+    items.push({ title, link, date: pubDate, dateTs: parsePubDate(pubDate), snippet, source: sourceName });
+  }
+  return items;
+}
+
 async function fetchFeed(feed) {
   try {
     const r = await fetchWithTimeout(feed.url, {}, 8000);
@@ -79,15 +125,36 @@ async function fetchFeed(feed) {
   }
 }
 
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
 export async function fetchRssPromos() {
   const results = await Promise.allSettled(FEEDS.map(fetchFeed));
   const all = results.flatMap(r => r.status === "fulfilled" ? r.value : []);
 
-  const seen = new Set();
-  return all
+  const now = Date.now();
+
+  // Deduplicate by canonical URL first, then by title
+  const seenUrls = new Set();
+  const seenTitles = new Set();
+  const deduped = all.filter(item => {
+    if (!item.title) return false;
+    const normTitle = item.title.toLowerCase().trim();
+    // URL dedup (primary key)
+    if (item.link) {
+      const canon = canonicalUrl(item.link);
+      if (seenUrls.has(canon)) return false;
+      seenUrls.add(canon);
+    }
+    // Title dedup (fallback for items without link)
+    if (seenTitles.has(normTitle)) return false;
+    seenTitles.add(normTitle);
+    return true;
+  });
+
+  return deduped
     .filter(item => {
-      if (!item.title || seen.has(item.title)) return false;
-      seen.add(item.title);
+      // Drop items older than 30 days
+      if (item.dateTs && now - item.dateTs > THIRTY_DAYS_MS) return false;
       return true;
     })
     .map(item => {
@@ -100,6 +167,11 @@ export async function fetchRssPromos() {
         score: scoreText(text),
       };
     })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10);
+    .sort((a, b) => {
+      // Sort by date desc, then score desc
+      const dateDiff = (b.dateTs || 0) - (a.dateTs || 0);
+      if (dateDiff !== 0) return dateDiff;
+      return b.score - a.score;
+    })
+    .slice(0, 12);
 }

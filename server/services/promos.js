@@ -42,6 +42,47 @@ function detectProgram(text) {
   return null;
 }
 
+function isValidUrl(str) {
+  if (!str) return false;
+  const s = str.trim();
+  return s.startsWith("http://") || s.startsWith("https://");
+}
+
+// Canonical URL: strip query params (UTM etc), lowercase hostname+path, no trailing slash
+function canonicalUrl(urlStr) {
+  try {
+    const u = new URL(urlStr);
+    return (u.hostname + u.pathname).toLowerCase().replace(/\/$/, "");
+  } catch {
+    return urlStr.toLowerCase().trim();
+  }
+}
+
+// Parse SerpAPI relative date string to timestamp (ms). Returns null if unparseable.
+function parseSerpDate(dateStr) {
+  if (!dateStr) return null;
+  const s = dateStr.toLowerCase().trim();
+  const now = Date.now();
+
+  const hourMatch = s.match(/(\d+)\s*hour/);
+  if (hourMatch) return now - parseInt(hourMatch[1]) * 3600000;
+
+  const dayMatch = s.match(/(\d+)\s*day/);
+  if (dayMatch) return now - parseInt(dayMatch[1]) * 86400000;
+
+  const weekMatch = s.match(/(\d+)\s*week/);
+  if (weekMatch) return now - parseInt(weekMatch[1]) * 7 * 86400000;
+
+  const monthMatch = s.match(/(\d+)\s*month/);
+  if (monthMatch) return now - parseInt(monthMatch[1]) * 30 * 86400000;
+
+  // Try direct date parse as last resort
+  const ts = Date.parse(dateStr);
+  return isNaN(ts) ? null : ts;
+}
+
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
 async function fetchSerpApiNews(query) {
   if (!SERPAPI_KEY) return [];
   try {
@@ -60,6 +101,7 @@ async function fetchSerpApiNews(query) {
       snippet: item.snippet || "",
       source: item.source?.name || (typeof item.source === "string" ? item.source : ""),
       date: item.date || "",
+      dateTs: parseSerpDate(item.date || ""),
       link: item.link || "",
     }));
   } catch {
@@ -68,6 +110,8 @@ async function fetchSerpApiNews(query) {
 }
 
 export async function fetchPromos() {
+  const now = Date.now();
+
   // Run SerpAPI (2 queries) and RSS feeds in parallel
   const [broad, bonus, rssResult] = await Promise.allSettled([
     fetchSerpApiNews("airline miles points bonus promo 2025 2026 (Aeroplan OR LifeMiles OR \"Flying Blue\" OR MileagePlus OR Avios OR AAdvantage OR \"Miles Smiles\")"),
@@ -81,15 +125,37 @@ export async function fetchPromos() {
   ];
   const rss = rssResult.status === "fulfilled" ? rssResult.value : [];
 
-  // Merge, deduplicate by title
-  const seen = new Set();
-  const all = [...serpItems, ...rss].filter(item => {
-    if (!item.title || seen.has(item.title)) return false;
-    seen.add(item.title);
+  // Merge all items
+  const merged = [...serpItems, ...rss];
+
+  // Deduplicate by canonical URL (primary), then by normalized title+source (fallback)
+  const seenUrls = new Set();
+  const seenKeys = new Set();
+  const deduped = merged.filter(item => {
+    if (!item.title) return false;
+
+    // URL dedup (primary) — only if link is a valid URL
+    if (item.link && isValidUrl(item.link)) {
+      const canon = canonicalUrl(item.link);
+      if (seenUrls.has(canon)) return false;
+      seenUrls.add(canon);
+    }
+
+    // Title+source dedup (covers items without URL or same URL different paths)
+    const key = item.title.toLowerCase().trim().slice(0, 80) + "|" + (item.source || "").toLowerCase();
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
+
     return true;
   });
 
-  const scored = all.map(item => {
+  // Filter expired (older than 30 days)
+  const fresh = deduped.filter(item => {
+    if (item.dateTs && now - item.dateTs > THIRTY_DAYS_MS) return false;
+    return true;
+  });
+
+  const scored = fresh.map(item => {
     const fullText = (item.title || "") + " " + (item.snippet || "");
     const program = detectProgram(fullText);
     const score = item.score ?? scorePromo(fullText);
@@ -98,16 +164,23 @@ export async function fetchPromos() {
       snippet: item.snippet || "",
       source: item.source || "",
       date: item.date || "",
-      link: item.link || "",
+      dateTs: item.dateTs || null,
+      // Only include link if it's a valid URL
+      link: isValidUrl(item.link) ? item.link.trim() : "",
       programId: item.programId ?? program?.id ?? null,
       programShort: item.programShort ?? program?.short ?? null,
       score,
     };
   });
 
+  // Sort: date desc (freshest first), then score desc
   const promos = scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 7);
+    .sort((a, b) => {
+      const dateDiff = (b.dateTs || 0) - (a.dateTs || 0);
+      if (dateDiff !== 0) return dateDiff;
+      return b.score - a.score;
+    })
+    .slice(0, 10);
 
   return { promos, fetchedAt: new Date().toISOString() };
 }

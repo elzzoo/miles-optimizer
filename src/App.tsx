@@ -28,9 +28,9 @@ const POPULAR_ROUTES = [
 ];
 
 export default function App() {
-  const { origin, setOrigin, dest, setDest, tripType, setTripType, cabin, setCabin, passengers, setPassengers, handleSwap } = useSearchState();
-  const [depDate, setDepDate] = useState(addDays(today, 30));
-  const [retDate, setRetDate] = useState(addDays(today, 40));
+  const { origin, setOrigin, dest, setDest, tripType, setTripType, cabin, setCabin, passengers, setPassengers, handleSwap, urlDepDate, urlRetDate } = useSearchState();
+  const [depDate, setDepDate] = useState(() => urlDepDate || addDays(today, 30));
+  const [retDate, setRetDate] = useState(() => urlRetDate || addDays(today, 40));
   const [milesOwned, setMilesOwned] = useState(false);
   const [directOnly, setDirectOnly] = useState(false);
   const [searched, setSearched] = useState(false);
@@ -77,7 +77,7 @@ export default function App() {
     setSelectedIdx(null);
     reset();
     resetFilters();
-    saveSearch(origin, dest, cabin, tripType);
+    saveSearch(origin, dest, cabin, tripType, depDate, isOneWay ? undefined : retDate, passengers);
     const params = new URLSearchParams({ origin, dest, depDate, cabin: String(cabin), passengers: String(passengers) });
     if (!isOneWay) params.set("retDate", retDate);
     search(params);

@@ -12,9 +12,19 @@ export function getSearchHistory(): Array<{ origin: string; dest: string; cabin:
   } catch { return []; }
 }
 
-export function saveSearch(origin, dest, cabin, tripType) {
-  const qs = new URLSearchParams({ from: origin, to: dest, cabin: String(cabin), type: tripType });
-  history.replaceState(null, "", "?" + qs.toString());
+export function saveSearch(
+  origin: string, dest: string, cabin: number, tripType: string,
+  depDate?: string, retDate?: string, passengers?: number
+) {
+  const params: Record<string, string> = {
+    from: origin, to: dest, cabin: String(cabin), type: tripType,
+  };
+  if (depDate) params.dep = depDate;
+  if (retDate && tripType !== "oneway") params.ret = retDate;
+  if (passengers && passengers > 1) params.pax = String(passengers);
+
+  history.replaceState(null, "", "?" + new URLSearchParams(params).toString());
+
   try {
     localStorage.setItem("mo-origin", origin);
     localStorage.setItem("mo-dest", dest);
@@ -38,12 +48,19 @@ export function useSearchState() {
     const raw = p.has("cabin") ? Number(p.get("cabin")) : Number(_ls("mo-cabin", 1));
     return (Number.isFinite(raw) ? raw : 1) as Cabin;
   });
-  const [passengers, setPassengers] = useState(1);
+  const [passengers, setPassengers] = useState<number>(() => {
+    const raw = Number(_p().get("pax") ?? 1);
+    return Number.isFinite(raw) && raw >= 1 && raw <= 6 ? raw : 1;
+  });
+
+  // Expose initial URL dates so App.tsx can use them
+  const urlDepDate = _p().get("dep") ?? null;
+  const urlRetDate = _p().get("ret") ?? null;
 
   const handleSwap = useCallback(() => {
     setOrigin(dest);
     setDest(origin);
   }, [origin, dest]);
 
-  return { origin, setOrigin, dest, setDest, tripType, setTripType, cabin, setCabin, passengers, setPassengers, handleSwap };
+  return { origin, setOrigin, dest, setDest, tripType, setTripType, cabin, setCabin, passengers, setPassengers, handleSwap, urlDepDate, urlRetDate };
 }

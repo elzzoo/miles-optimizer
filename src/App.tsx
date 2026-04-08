@@ -245,6 +245,16 @@ export default function App() {
                 <input type="date" value={depDate} min={addDays(today, 0)}
                   onChange={e => setDepDate(e.target.value)}
                   className="bg-white/5 border border-white/10 rounded-xl text-slate-200 text-sm px-3 py-2.5 w-full focus:border-indigo-500/60 focus:outline-none transition-colors" />
+                {/* Quick date chips */}
+                <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                  {[7, 14, 30, 60, 90].map(n => (
+                    <button key={n} type="button"
+                      onClick={() => { setDepDate(addDays(today, n)); setSearched(false); }}
+                      className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${depDate === addDays(today, n) ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" : "border-white/10 text-slate-500 hover:text-slate-300 hover:border-white/20"}`}>
+                      +{n}j
+                    </button>
+                  ))}
+                </div>
               </div>
               {!isOneWay && (
                 <div>
@@ -252,6 +262,16 @@ export default function App() {
                   <input type="date" value={retDate} min={addDays(depDate, 1)}
                     onChange={e => setRetDate(e.target.value)}
                     className="bg-white/5 border border-white/10 rounded-xl text-slate-200 text-sm px-3 py-2.5 w-full focus:border-indigo-500/60 focus:outline-none transition-colors" />
+                  {/* Quick return chips relative to departure */}
+                  <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                    {[3, 7, 10, 14, 21].map(n => (
+                      <button key={n} type="button"
+                        onClick={() => setRetDate(addDays(new Date(depDate + "T12:00:00"), n))}
+                        className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${retDate === addDays(new Date(depDate + "T12:00:00"), n) ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" : "border-white/10 text-slate-500 hover:text-slate-300 hover:border-white/20"}`}>
+                        +{n}j
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

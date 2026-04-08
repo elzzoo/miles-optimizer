@@ -10,7 +10,9 @@ import { useMilesCalculator } from "./hooks/useMilesCalculator.js";
 import { useRates } from "./hooks/useRates.js";
 import { useTranslation } from "./i18n/index.js";
 import { useCurrency } from "./hooks/useCurrency.js";
-import { useSearchState, saveSearch } from "./hooks/useSearchState.js";
+import { useSearchState, saveSearch, getSearchHistory } from "./hooks/useSearchState.js";
+import { useFlightFilters } from "./hooks/useFlightFilters.js";
+import FlightFilters from "./components/FlightFilters.jsx";
 import { airportsMap } from "./data/airports.js";
 import { today, addDays } from "./utils/dates.js";
 import { fmt, estimateCash, convert, formatAmount } from "./utils/currency.js";
@@ -30,10 +32,12 @@ export default function App() {
   const [depDate, setDepDate] = useState(addDays(today, 30));
   const [retDate, setRetDate] = useState(addDays(today, 40));
   const [milesOwned, setMilesOwned] = useState(false);
+  const [directOnly, setDirectOnly] = useState(false);
   const [searched, setSearched] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [isWarm, setIsWarm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [searchHistory] = useState(() => getSearchHistory());
 
   const { t, lang, setLang } = useTranslation();
   const { currency, setCurrency } = useCurrency();
@@ -45,11 +49,14 @@ export default function App() {
   const distKm = Math.round(distMiles * 1.60934);
 
   const { googleFlights, skyFlights, gLoading, sLoading, gError, sError, loading, allFlights, bestApiPrice, search, reset } = useFlights();
+  const { filters, filteredFlights, airlines, activeFiltersCount, setDirectOnly: syncDirectOnly, setAirline, setMaxStops, setSortBy, reset: resetFilters } = useFlightFilters(allFlights, directOnly);
   const milesResults = useMilesCalculator({ origin, dest, cabin, distMiles, isOneWay, passengers, rates, milesOwned });
 
   useEffect(() => {
     fetch("/api/health").then(() => setIsWarm(true)).catch(() => setIsWarm(true));
   }, []);
+
+  useEffect(() => { syncDirectOnly(directOnly); }, [directOnly, syncDirectOnly]);
 
   useEffect(() => {
     if (retDate <= depDate) setRetDate(addDays(depDate, 7));
@@ -69,11 +76,12 @@ export default function App() {
     setSearched(true);
     setSelectedIdx(null);
     reset();
+    resetFilters();
     saveSearch(origin, dest, cabin, tripType);
     const params = new URLSearchParams({ origin, dest, depDate, cabin: String(cabin), passengers: String(passengers) });
     if (!isOneWay) params.set("retDate", retDate);
     search(params);
-  }, [origin, dest, depDate, retDate, cabin, passengers, tripType, isOneWay, search, reset]);
+  }, [origin, dest, depDate, retDate, cabin, passengers, tripType, isOneWay, search, reset, resetFilters]);
 
   const handleSwapAndReset = useCallback(() => {
     handleSwap();
@@ -257,6 +265,22 @@ export default function App() {
               </div>
             </div>
 
+            {/* Direct only toggle */}
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div>
+                <span className="text-slate-300 text-sm font-medium">Vols directs uniquement</span>
+                <p className="text-slate-500 text-xs mt-0.5">Exclure les vols avec escale</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDirectOnly(v => !v)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ${directOnly ? "bg-indigo-500" : "bg-white/15"}`}
+                aria-pressed={directOnly}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${directOnly ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+
             {/* Miles toggle */}
             <div className="flex items-center justify-between mb-5 px-1">
               <div>
@@ -356,7 +380,18 @@ export default function App() {
                   {loading && allFlights.length === 0 && <Skeleton />}
                   {allFlights.length > 0 && (
                     <div className="space-y-2 stagger-children">
-                      {allFlights.map((f, i) => (
+                      <FlightFilters
+                        airlines={airlines}
+                        filters={filters}
+                        activeFiltersCount={activeFiltersCount}
+                        setAirline={setAirline}
+                        setMaxStops={setMaxStops}
+                        setSortBy={setSortBy}
+                        reset={resetFilters}
+                        totalFlights={allFlights.length}
+                        filteredCount={filteredFlights.length}
+                      />
+                      {filteredFlights.map((f, i) => (
                         <div key={i} className="animate-fade-up">
                           <FlightCard flight={f} idx={i} source={f.source} selectedIdx={selectedIdx} onSelect={setSelectedIdx} rates={rates} currency={currency} t={t} />
                         </div>
@@ -507,6 +542,38 @@ export default function App() {
                 ))}
               </div>
             </div>
+
+            {/* Recent searches */}
+            {searchHistory.length > 0 && (
+              <div className="mb-6">
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  Recherches récentes
+                </p>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+                  {searchHistory.map((entry, i) => {
+                    const oA = airportsMap[entry.origin];
+                    const dA = airportsMap[entry.dest];
+                    if (!oA || !dA) return null;
+                    return (
+                      <button key={i}
+                        onClick={() => { setOrigin(entry.origin); setDest(entry.dest); setCabin(entry.cabin as import("./types.js").Cabin); }}
+                        className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/4 border border-white/8 hover:bg-indigo-500/10 hover:border-indigo-500/25 transition-all group text-left cursor-pointer"
+                      >
+                        <span className="text-sm">{oA.flag}</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3 h-3 text-indigo-500 flex-shrink-0">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                        </svg>
+                        <span className="text-sm">{dA.flag}</span>
+                        <span className="text-slate-300 text-xs font-medium truncate">{entry.origin} → {entry.dest}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
           </div>
         )}

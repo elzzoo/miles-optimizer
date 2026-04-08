@@ -8,7 +8,7 @@ export function useCountryInfo(iso2) {
     if (!iso2) return;
     setInfo(null);
     fetch(`/api/country?iso2=${iso2}`)
-      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(setInfo)
       .catch(() => {});
   }, [iso2]);

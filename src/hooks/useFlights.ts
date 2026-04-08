@@ -3,16 +3,17 @@ import type { Flight } from "../types.js";
 
 function parseGoogleFlights(data: unknown): Flight[] {
   if (!data) return [];
-  const all = [...(data.best_flights || []), ...(data.other_flights || [])];
+  const d = data as any;
+  const all = [...(d.best_flights || []), ...(d.other_flights || [])];
   return all
-    .map(f => ({
+    .map((f: any) => ({
       price: f.price,
       airline: f.flights?.[0]?.airline || "—",
       direct: (f.flights?.length || 1) === 1 && (f.layovers?.length || 0) === 0,
       stops: f.layovers?.length || 0,
       duration: f.total_duration,
       depTime: f.flights?.[0]?.departure_airport?.time,
-      source: "google",
+      source: "google" as const,
     }))
     .filter(f => f.price)
     .sort((a, b) => a.price - b.price)

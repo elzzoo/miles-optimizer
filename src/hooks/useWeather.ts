@@ -10,7 +10,7 @@ export function useWeather(lat, lon) {
     setLoading(true);
     setWeather(null);
     fetch(`/api/weather?lat=${lat}&lon=${lon}`)
-      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(data => { setWeather(data); setLoading(false); })
       .catch(() => setLoading(false));
   }, [lat, lon]);

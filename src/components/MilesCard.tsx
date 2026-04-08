@@ -10,7 +10,7 @@ interface MilesCardProps {
   isOneWay: boolean;
   rates: ExchangeRates | null;
   currency: Currency;
-  t?: Record<string, unknown>;
+  t?: Record<string, any>;
   lang?: string;
   origin?: string;
   dest?: string;
@@ -50,7 +50,7 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
     if (!updatedAt) return false;
     const [year, month] = updatedAt.split("-").map(Number);
     const updated = new Date(year, month - 1);
-    const diffDays = (Date.now() - updated) / (1000 * 60 * 60 * 24);
+    const diffDays = (Date.now() - updated.getTime()) / (1000 * 60 * 60 * 24);
     return diffDays > 90;
   }
 

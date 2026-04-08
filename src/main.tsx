@@ -12,15 +12,24 @@ Sentry.init({
   tracesSampleRate: 0.1,
 });
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: unknown;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
     return { hasError: true, error };
   }
-  componentDidCatch(error, info) {
+  componentDidCatch(error: unknown, info: React.ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
     Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
@@ -28,7 +37,6 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px', padding: '24px' }}>
-          <div style={{ fontSize: '48px' }}>✈️</div>
           <p style={{ color: '#e2e8f0', fontWeight: 'bold', fontSize: '18px', textAlign: 'center' }}>Une erreur est survenue</p>
           <p style={{ color: '#94a3b8', fontSize: '14px', textAlign: 'center' }}>Rechargez la page pour réessayer.</p>
           <button
@@ -44,7 +52,7 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-createRoot(document.getElementById("root")).render(
+createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>

@@ -425,7 +425,10 @@ export default function App() {
                       </span>
                     </div>
                   </div>
+                  {/* Loading skeleton */}
                   {loading && allFlights.length === 0 && <Skeleton />}
+
+                  {/* Flights list with filters */}
                   {allFlights.length > 0 && (
                     <div className="space-y-2 stagger-children">
                       <FlightFilters
@@ -439,22 +442,54 @@ export default function App() {
                         totalFlights={allFlights.length}
                         filteredCount={filteredFlights.length}
                       />
+                      {/* Filtered empty state */}
+                      {filteredFlights.length === 0 && (
+                        <div className="rounded-2xl bg-white/4 border border-white/8 p-5 text-center">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-7 h-7 text-slate-500 mx-auto mb-2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
+                          </svg>
+                          <p className="text-slate-300 text-sm font-semibold mb-1">{t.filteredEmptyTitle}</p>
+                          <p className="text-slate-500 text-xs mb-3">{t.filteredEmptySub}</p>
+                          <button onClick={resetFilters}
+                            className="text-xs px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 transition-colors">
+                            {t.filteredEmptyReset}
+                          </button>
+                        </div>
+                      )}
                       {filteredFlights.map((f, i) => (
                         <div key={i} className="animate-fade-up">
                           <FlightCard flight={f} idx={i} source={f.source} selectedIdx={selectedIdx} onSelect={setSelectedIdx} rates={rates} currency={currency} t={t} />
                         </div>
                       ))}
                       {selectedIdx !== null && <p className="text-center text-indigo-400 text-xs py-1">{t.selectedNote}</p>}
-                      {oneFailed && <p className="text-center text-amber-500/80 text-xs py-1">{t.partialResults(gError ? "Google Flights" : "Skyscanner")}</p>}
+                      {oneFailed && (
+                        <p className="text-center text-amber-500/70 text-xs py-1 flex items-center justify-center gap-1.5">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 flex-shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                          {t.partialResults(gError ? "Google Flights" : "Skyscanner")}
+                        </p>
+                      )}
                     </div>
                   )}
+
+                  {/* No flights found (valid response, 0 results) */}
+                  {!loading && !bothFailed && searched && allFlights.length === 0 && (
+                    <div className="glass rounded-2xl p-6 text-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-slate-500 mx-auto mb-3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                      </svg>
+                      <p className="text-slate-300 text-sm font-semibold mb-1">{t.noFlightsTitle}</p>
+                      <p className="text-slate-500 text-xs">{t.noFlightsSub}</p>
+                    </div>
+                  )}
+
+                  {/* Both sources failed */}
                   {bothFailed && (
                     <div className="glass rounded-2xl p-5 text-center">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-red-400/60 mx-auto mb-2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                       </svg>
-                      <p className="text-red-300 text-sm font-bold">{t.bothFailedTitle}</p>
-                      <p className="text-slate-400 text-xs mt-1">{t.bothFailedSub}</p>
+                      <p className="text-slate-200 text-sm font-bold mb-1">{t.bothFailedTitle}</p>
+                      <p className="text-slate-400 text-xs">{t.bothFailedSub}</p>
                     </div>
                   )}
                 </div>

@@ -43,8 +43,13 @@ const en = {
   sourceSkyFail: "❌ Sky",
   selectedNote: "Selected price used for miles comparison ↓",
   partialResults: (src) => `⚠️ ${src} unavailable — partial results`,
-  bothFailedTitle: "⚠️ Real-time search unavailable",
-  bothFailedSub: "Estimated prices used for comparison. Try again in a few moments.",
+  bothFailedTitle: "Search unavailable",
+  bothFailedSub: "Could not reach Google Flights or Skyscanner. Check your connection or try again shortly. Estimated prices are used below.",
+  noFlightsTitle: "No flights found",
+  noFlightsSub: "No results for this route on these dates. Try different dates or a nearby hub.",
+  filteredEmptyTitle: "No flights match your filters",
+  filteredEmptySub: "Adjust the filters (stops, airline) to see more results.",
+  filteredEmptyReset: "Reset filters",
 
   // Cash box
   priceSelected: "Selected price (live)",

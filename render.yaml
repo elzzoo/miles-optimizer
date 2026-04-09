@@ -1,0 +1,64 @@
+services:
+  - type: web
+    name: miles-optimizer
+    env: node
+    branch: main
+    region: frankfurt
+    buildCommand: npm install --ignore-scripts --include=dev && npm run build
+    startCommand: node server.js
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: RAPIDAPI_KEY
+        value: "a22e81b698msh0002716289b3d98p1268b9jsn851d82e6eb11"
+      - key: SERPAPI_KEY
+        sync: false
+      - key: ANALYTICS_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  - type: web
+    name: miles-optimizer-next
+    env: node
+    branch: next
+    region: frankfurt
+    buildCommand: npm install --ignore-scripts --include=dev && npm run build
+    startCommand: node server.js
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: RAPIDAPI_KEY
+        value: "a22e81b698msh0002716289b3d98p1268b9jsn851d82e6eb11"
+      - key: SERPAPI_KEY
+        sync: false
+      - key: ANALYTICS_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: SUPABASE_URL
+        value: "https://oquteuqcfncrbrtvpybm.supabase.co"
+      - key: SUPABASE_ANON_KEY
+        value: "sb_publishable__oIYZKyPeATEvWWcPmcJqw_ioRzGg7E"
+      - key: SUPABASE_SERVICE_KEY
+        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xdXRldXFjZm5jcmJydHZweWJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTc1MTU2NywiZXhwIjoyMDkxMzI3NTY3fQ.pOv6vgwmfXFKGR_LAHnZPvrdEVwnBa_6KMTcWa9koD4"
+      - key: RESEND_API_KEY
+        value: "re_3zPPNJcq_7J2WbVEdyVEEp3WCExwN95vV"
+      - key: UNSPLASH_ACCESS_KEY
+        value: "c_z7CPIpJucOTMmy2zjhjqXcAE86wxhlVAyZ4h2M0dM"
+      - key: OPENTRIPMAP_KEY
+        value: "5ae2e3f221c38a28845f05b6880de920326a8fac233d8009e07c4de8"
+      - key: PLAUSIBLE_DOMAIN
+        value: "miles-optimizer-next.onrender.com"
+      - key: APP_URL
+        value: "https://miles-optimizer-next.onrender.com"

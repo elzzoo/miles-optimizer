@@ -136,18 +136,23 @@ export async function fetchRssPromos() {
   // Deduplicate by canonical URL first, then by title
   const seenUrls = new Set();
   const seenTitles = new Set();
+  // Normalize title: lowercase, strip punctuation, collapse spaces, first 60 chars
+  const normTitle = (t) =>
+    t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+
   const deduped = all.filter(item => {
     if (!item.title) return false;
-    const normTitle = item.title.toLowerCase().trim();
-    // URL dedup (primary key)
+    // URL dedup (primary key) — only for direct article URLs, not redirects
     if (item.link) {
       const canon = canonicalUrl(item.link);
       if (seenUrls.has(canon)) return false;
       seenUrls.add(canon);
     }
-    // Title dedup (fallback for items without link)
-    if (seenTitles.has(normTitle)) return false;
-    seenTitles.add(normTitle);
+    // Normalized title dedup (catches same article with minor title variations across feeds)
+    const nt = normTitle(item.title);
+    if (!nt) return false;
+    if (seenTitles.has(nt)) return false;
+    seenTitles.add(nt);
     return true;
   });
 

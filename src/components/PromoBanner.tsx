@@ -77,8 +77,20 @@ function PromoCard({ item }) {
   );
 }
 
+// Client-side safety dedup — catches any duplicates that survive server-side processing
+function dedupePromos(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const key = (item.title || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 50);
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 export default function PromoBanner() {
-  const { promos, loading, fetchedAt, error } = usePromos();
+  const { promos: rawPromos, loading, fetchedAt, error } = usePromos();
+  const promos = dedupePromos(rawPromos);
 
   return (
     <div className="mb-6">

@@ -128,23 +128,34 @@ export async function fetchPromos() {
   // Merge all items
   const merged = [...serpItems, ...rss];
 
-  // Deduplicate by canonical URL (primary), then by normalized title+source (fallback)
+  // Normalize a title for dedup: lowercase, strip punctuation, collapse spaces, first 60 chars
+  function normTitle(t) {
+    return t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+  }
+
+  // Deduplicate: canonical URL first, then normalized title (source-independent)
   const seenUrls = new Set();
-  const seenKeys = new Set();
+  const seenTitles = new Set();
   const deduped = merged.filter(item => {
     if (!item.title) return false;
 
-    // URL dedup (primary) — only if link is a valid URL
+    // URL dedup — only for proper http(s) URLs; Google redirect URLs are excluded
+    // (they're unique per-request so can't reliably dedup by URL across queries)
     if (item.link && isValidUrl(item.link)) {
       const canon = canonicalUrl(item.link);
-      if (seenUrls.has(canon)) return false;
-      seenUrls.add(canon);
+      // Only use URL dedup for non-Google-redirect URLs
+      const isGoogleRedirect = canon.includes("news.google.com") || canon.includes("google.com/url");
+      if (!isGoogleRedirect) {
+        if (seenUrls.has(canon)) return false;
+        seenUrls.add(canon);
+      }
     }
 
-    // Title+source dedup (covers items without URL or same URL different paths)
-    const key = item.title.toLowerCase().trim().slice(0, 80) + "|" + (item.source || "").toLowerCase();
-    if (seenKeys.has(key)) return false;
-    seenKeys.add(key);
+    // Title dedup (source-independent) — catches same article across SerpAPI queries and RSS
+    const nt = normTitle(item.title);
+    if (!nt) return false;
+    if (seenTitles.has(nt)) return false;
+    seenTitles.add(nt);
 
     return true;
   });

@@ -84,17 +84,12 @@ body {
   transform-origin: top;
 }
 
-/* Promo marquee */
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+/* Hide scrollbar on promo strip */
+.scrollbar-none {
+  scrollbar-width: none;
 }
-.animate-marquee {
-  animation: marquee 35s linear infinite;
-  will-change: transform;
-}
-.marquee-root:hover .animate-marquee {
-  animation-play-state: paused;
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 /* Hero gradient overlay */

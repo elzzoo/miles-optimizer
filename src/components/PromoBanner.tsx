@@ -16,7 +16,6 @@ function formatRelativeDate(dateTs: number | null, dateStr: string): string {
     if (diffD < 7) return `Il y a ${diffD}j`;
     if (diffD < 30) return `Il y a ${Math.floor(diffD / 7)} sem.`;
   }
-  // Fallback to raw string (SerpAPI relative dates)
   if (dateStr) return dateStr;
   return "";
 }
@@ -55,7 +54,7 @@ function PromoCard({ item }) {
     </>
   );
 
-  const baseClass = "flex-shrink-0 w-72 flex items-start gap-3 mx-2 px-4 py-3 rounded-2xl bg-white/5 border border-white/8 transition-all group";
+  const baseClass = "flex-shrink-0 w-72 flex items-start gap-3 px-4 py-3 rounded-2xl bg-white/5 border border-white/8 transition-all group";
 
   if (hasLink) {
     return (
@@ -77,7 +76,7 @@ function PromoCard({ item }) {
   );
 }
 
-// Client-side safety dedup — catches any duplicates that survive server-side processing
+// Client-side safety dedup
 function dedupePromos(items) {
   const seen = new Set();
   return items.filter(item => {
@@ -89,7 +88,7 @@ function dedupePromos(items) {
 }
 
 export default function PromoBanner() {
-  const { promos: rawPromos, loading, fetchedAt, error } = usePromos();
+  const { promos: rawPromos, loading, fetchedAt } = usePromos();
   const promos = dedupePromos(rawPromos);
 
   return (
@@ -107,32 +106,30 @@ export default function PromoBanner() {
         )}
       </div>
 
-      {/* Marquee track */}
-      <div className="marquee-root overflow-hidden py-1">
-        {loading && (
-          <div className="flex gap-3 px-4 max-w-2xl mx-auto animate-pulse">
-            {[1,2,3].map(i => (
-              <div key={i} className="flex-shrink-0 w-72 h-16 rounded-2xl bg-white/5 border border-white/8" />
-            ))}
-          </div>
-        )}
-        {!loading && promos.length === 0 && (
-          <div className="max-w-2xl mx-auto px-4">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/4 border border-white/8 text-slate-500 text-xs">
+      {/* Scrollable row — no duplication, one card per item */}
+      <div className="overflow-x-auto pb-2 scrollbar-none" style={{ WebkitOverflowScrolling: "touch" }}>
+        <div className="flex gap-3 px-4">
+          {loading && (
+            <>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex-shrink-0 w-72 h-16 rounded-2xl bg-white/5 border border-white/8 animate-pulse" />
+              ))}
+            </>
+          )}
+
+          {!loading && promos.length === 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/4 border border-white/8 text-slate-500 text-xs w-full max-w-sm">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-amber-500/40 flex-shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 0 1 0 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 0 1 0-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375Z" />
               </svg>
               Aucune promo miles disponible pour le moment
             </div>
-          </div>
-        )}
-        {!loading && promos.length > 0 && (
-          <div className="flex animate-marquee" style={{ width: `${promos.length * 2 * 304}px` }}>
-            {[...promos, ...promos].map((item, i) => (
-              <PromoCard key={i} item={item} />
-            ))}
-          </div>
-        )}
+          )}
+
+          {!loading && promos.map((item, i) => (
+            <PromoCard key={i} item={item} />
+          ))}
+        </div>
       </div>
     </div>
   );

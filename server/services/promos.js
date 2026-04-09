@@ -128,22 +128,35 @@ export async function fetchPromos() {
   // Merge all items
   const merged = [...serpItems, ...rss];
 
-  // Normalize a title for dedup: lowercase, strip punctuation, collapse spaces, first 60 chars
+  // Normalize a title for dedup: lowercase, strip punctuation/articles, collapse spaces, first 60 chars
   function normTitle(t) {
-    return t.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim().slice(0, 60);
+    return t.toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")   // strip punctuation
+      .replace(/\b(the|a|an|in|on|at|to|of|for|and|or|is|are|was|with)\b/g, " ") // strip stopwords
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 60);
+  }
+
+  // Check if two normalized titles are "too similar" (share 80%+ of words)
+  function tooSimilar(a, b) {
+    const wa = new Set(a.split(" ").filter(w => w.length > 3));
+    const wb = new Set(b.split(" ").filter(w => w.length > 3));
+    if (wa.size === 0 || wb.size === 0) return false;
+    let shared = 0;
+    for (const w of wa) { if (wb.has(w)) shared++; }
+    return shared / Math.min(wa.size, wb.size) >= 0.8;
   }
 
   // Deduplicate: canonical URL first, then normalized title (source-independent)
   const seenUrls = new Set();
-  const seenTitles = new Set();
+  const seenTitles = [];   // array for similarity check
   const deduped = merged.filter(item => {
     if (!item.title) return false;
 
-    // URL dedup — only for proper http(s) URLs; Google redirect URLs are excluded
-    // (they're unique per-request so can't reliably dedup by URL across queries)
+    // URL dedup — only for proper http(s) URLs; Google redirect URLs excluded
     if (item.link && isValidUrl(item.link)) {
       const canon = canonicalUrl(item.link);
-      // Only use URL dedup for non-Google-redirect URLs
       const isGoogleRedirect = canon.includes("news.google.com") || canon.includes("google.com/url");
       if (!isGoogleRedirect) {
         if (seenUrls.has(canon)) return false;
@@ -151,11 +164,11 @@ export async function fetchPromos() {
       }
     }
 
-    // Title dedup (source-independent) — catches same article across SerpAPI queries and RSS
+    // Title dedup: exact normalized match OR high word-overlap
     const nt = normTitle(item.title);
     if (!nt) return false;
-    if (seenTitles.has(nt)) return false;
-    seenTitles.add(nt);
+    if (seenTitles.some(seen => seen === nt || tooSimilar(seen, nt))) return false;
+    seenTitles.push(nt);
 
     return true;
   });

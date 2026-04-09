@@ -79,17 +79,23 @@ router.get("/skyscanner", async (req, res) => {
   }
 });
 
-// Promos — cached 4h
-const PROMOS_TTL = 4 * 60 * 60 * 1000;
+// Promos — cached 2h
+// Version string: bump to invalidate stale in-memory cache on deploy
+const PROMOS_CACHE_VERSION = "v3";
+const PROMOS_TTL = 2 * 60 * 60 * 1000;
 let promosCache = null;
 
 router.get("/promos", async (req, res) => {
+  // Invalidate cache if version changed (e.g. after a deploy that fixes dedup)
+  if (promosCache && promosCache.version !== PROMOS_CACHE_VERSION) {
+    promosCache = null;
+  }
   if (promosCache && Date.now() - promosCache.ts < PROMOS_TTL) {
     return res.json({ ...promosCache.data, _cached: true });
   }
   try {
     const data = await fetchPromos();
-    promosCache = { data, ts: Date.now() };
+    promosCache = { data, ts: Date.now(), version: PROMOS_CACHE_VERSION };
     res.json(data);
   } catch (e) {
     console.error("[api]", e.message);

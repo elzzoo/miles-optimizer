@@ -234,7 +234,7 @@ export const PROGRAMS: Program[] = [
     notes: "Idéal pour Dubaï et connexions via DXB. Réseau unique.",
     notesEn: "Ideal for Dubai and connections via DXB. Unique network.",
     chartType: "zone",
-    bookingUrl: "https://www.emirates.com/english/skywards/redeeming-miles/",
+    bookingUrl: "https://www.emirates.com/english/skywards/spend-miles/",
     updatedAt: "2026-04",
   },
   {
@@ -289,7 +289,7 @@ export const PROGRAMS: Program[] = [
     notes: "Idéal pour vols intra-Afrique et Europe via Nairobi.",
     notesEn: "Ideal for intra-Africa and Europe flights via Nairobi.",
     chartType: "zone",
-    bookingUrl: "https://www.kenya-airways.com/en/flying-with-us/asante-miles/",
+    bookingUrl: "https://asante.kenya-airways.com/",
     updatedAt: "2026-04",
   },
   // ── Africains / régionaux ───────────────────────────────────
@@ -326,7 +326,7 @@ export const PROGRAMS: Program[] = [
     notes: "Membre OneWorld. Bon barème sur vols Afrique–Europe via Casablanca.",
     notesEn: "OneWorld member. Good rates for Africa–Europe via Casablanca.",
     chartType: "zone",
-    bookingUrl: "https://www.royalairmaroc.com/safarflyer",
+    bookingUrl: "https://www.royalairmaroc.com/us-en/loyalty",
     updatedAt: "2026-04",
   },
   {
@@ -344,7 +344,7 @@ export const PROGRAMS: Program[] = [
     notes: "Programme local Tunisair. Europe et Afrique du Nord.",
     notesEn: "Tunisair local program. Mainly Europe and North Africa.",
     chartType: "zone",
-    bookingUrl: "https://www.tunisair.com/fidelys",
+    bookingUrl: "https://fidelys.tunisair.com/en",
     updatedAt: "2026-04",
   },
 ];

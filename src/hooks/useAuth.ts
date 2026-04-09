@@ -1,8 +1,11 @@
 import { useState, useEffect, createContext, useContext } from "react";
 import { createClient, User, Session } from "@supabase/supabase-js";
 
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || "";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+declare const __SUPABASE_URL__: string;
+declare const __SUPABASE_ANON_KEY__: string;
+
+const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || (typeof __SUPABASE_URL__      !== "undefined" ? __SUPABASE_URL__      : "");
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || (typeof __SUPABASE_ANON_KEY__ !== "undefined" ? __SUPABASE_ANON_KEY__ : "");
 
 export const supabase = SUPABASE_URL
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)

@@ -1,5 +1,3 @@
-import { airportsData } from "../data/airportsData.js";
-
 const BASE = "https://api.opentripmap.com/0.1/en";
 const KEY   = process.env.OPENTRIPMAP_KEY;
 

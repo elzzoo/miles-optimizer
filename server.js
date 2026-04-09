@@ -79,6 +79,23 @@ app.use("/api/alerts",       alertsRouter);
 app.use("/api/destinations",  destinationsRouter);
 app.use("/api/deals",         dealsRouter);
 
+// Rich status endpoint — shows which integrations are configured
+app.get("/api/status", (req, res) => {
+  res.json({
+    ok:        true,
+    version:   "2.0.0",
+    env:       process.env.NODE_ENV || "development",
+    services: {
+      supabase: !!process.env.SUPABASE_URL,
+      resend:   !!process.env.RESEND_API_KEY,
+      serpapi:  !!process.env.SERPAPI_KEY,
+      rapidapi: !!process.env.RAPIDAPI_KEY,
+      unsplash: !!process.env.UNSPLASH_ACCESS_KEY,
+    },
+    ts: new Date().toISOString(),
+  });
+});
+
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 

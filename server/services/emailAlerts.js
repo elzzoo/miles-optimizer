@@ -1,6 +1,9 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+export const isResendConfigured = !!RESEND_API_KEY;
+
+const resend = isResendConfigured ? new Resend(RESEND_API_KEY) : null;
 const FROM   = "Miles Optimizer <alerts@milesoptimizer.com>";
 const BASE_URL = process.env.APP_URL || "https://miles-optimizer-next.onrender.com";
 
@@ -10,6 +13,7 @@ function scoreColor(label) {
 }
 
 export async function sendAlertEmail({ email, origin, destination }, program, milesNeeded, score) {
+  if (!resend) { console.warn("[emailAlerts] Resend not configured — skipping email"); return false; }
   const searchUrl = `${BASE_URL}/search?from=${origin}&to=${destination}`;
   const color = scoreColor(score.label);
 
@@ -59,6 +63,7 @@ export async function sendAlertEmail({ email, origin, destination }, program, mi
 }
 
 export async function sendWelcomeEmail(email) {
+  if (!resend) { console.warn("[emailAlerts] Resend not configured — skipping welcome email"); return; }
   await resend.emails.send({
     from: FROM,
     to: email,

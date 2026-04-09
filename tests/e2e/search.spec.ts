@@ -65,17 +65,15 @@ test.describe("Miles Optimizer — search form scenarios", () => {
   test("8. chips de date rapide mise à jour du champ date", async ({ page }) => {
     await page.goto("/");
 
-    // Get current departure date input value
+    // The hidden date input holds the YYYY-MM-DD value
     const depInput = page.locator('input[type="date"]').first();
-    const originalVal = await depInput.inputValue();
 
-    // Click +30j chip
-    const chip30 = page.getByRole("button", { name: "+30j" });
-    if (await chip30.count() > 0) {
-      await chip30.first().click();
+    // Click "1 mois" chip (30j from today)
+    const chip = page.getByRole("button", { name: "1 mois" });
+    if (await chip.count() > 0) {
+      await chip.first().click();
       await page.waitForTimeout(100);
       const newVal = await depInput.inputValue();
-      // New date should differ from original (unless original was already +30j)
       expect(newVal).toBeTruthy();
       expect(newVal).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }

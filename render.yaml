@@ -1,12 +1,11 @@
 services:
-  # ── Service 1 : Version stable (main) ─────────────────────────
   - type: web
     name: miles-optimizer
     env: node
     branch: main
     region: frankfurt
     buildCommand: npm install --ignore-scripts && npm run build
-    startCommand: node --experimental-strip-types server.js
+    startCommand: node server.js
     plan: free
     autoDeploy: true
     healthCheckPath: /api/health
@@ -15,23 +14,22 @@ services:
         value: production
       - key: PORT
         value: "3001"
-      - key: SERPAPI_KEY
-        sync: false
       - key: RAPIDAPI_KEY
+        value: "a22e81b698msh0002716289b3d98p1268b9jsn851d82e6eb11"
+      - key: SERPAPI_KEY
         sync: false
       - key: ANALYTICS_SECRET
         sync: false
       - key: SENTRY_DSN
         sync: false
 
-  # ── Service 2 : Version next (nouvelle) ───────────────────────
   - type: web
     name: miles-optimizer-next
     env: node
     branch: next
     region: frankfurt
     buildCommand: npm install --ignore-scripts && npm run build
-    startCommand: node --experimental-strip-types server.js
+    startCommand: node server.js
     plan: free
     autoDeploy: true
     healthCheckPath: /api/health
@@ -40,16 +38,14 @@ services:
         value: production
       - key: PORT
         value: "3001"
-      - key: SERPAPI_KEY
-        sync: false
       - key: RAPIDAPI_KEY
+        value: "a22e81b698msh0002716289b3d98p1268b9jsn851d82e6eb11"
+      - key: SERPAPI_KEY
         sync: false
       - key: ANALYTICS_SECRET
         sync: false
       - key: SENTRY_DSN
         sync: false
-
-      # ── New v2 keys ──────────────────────────────────────────
       - key: SUPABASE_URL
         value: "https://oquteuqcfncrbrtvpybm.supabase.co"
       - key: SUPABASE_ANON_KEY

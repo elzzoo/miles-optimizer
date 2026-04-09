@@ -120,3 +120,28 @@ test.describe("Miles Optimizer — search form scenarios", () => {
   });
 
 });
+
+test.describe("Miles Optimizer — promo links", () => {
+
+  test("13. liens promos: toute carte avec lien a un href http(s) valide", async ({ page }) => {
+    await page.goto("/");
+    // Wait for promos to load (or timeout gracefully)
+    await page.waitForTimeout(3000);
+
+    // Find all <a> tags inside the promo banner area
+    const promoLinks = page.locator(".overflow-x-auto a[href]");
+    const count = await promoLinks.count();
+
+    if (count === 0) {
+      // No promos loaded (API unavailable) — test passes gracefully
+      return;
+    }
+
+    // Verify every visible link has a valid http(s) href
+    for (let i = 0; i < count; i++) {
+      const href = await promoLinks.nth(i).getAttribute("href");
+      expect(href).toMatch(/^https?:\/\//);
+    }
+  });
+
+});

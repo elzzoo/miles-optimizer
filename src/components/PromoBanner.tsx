@@ -71,7 +71,7 @@ function PromoCard({ item }) {
   }
 
   return (
-    <div className={`${baseClass} cursor-default opacity-80`}>
+    <div className={`${baseClass} cursor-default`} title="Article sans lien disponible">
       {inner}
     </div>
   );

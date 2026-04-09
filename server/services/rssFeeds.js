@@ -42,17 +42,21 @@ function extractTag(xml, tag) {
   return "";
 }
 
-// Extract link: tries <link>url</link>, then <link href="url"/>, then <guid>
+// Extract link: tries <link>url</link>, then <link href="url"/>, then <atom:link>, then <guid>
 function extractLink(block) {
   // Standard RSS <link>url</link>
   const textLink = extractTag(block, "link");
   if (textLink && isValidUrl(textLink)) return textLink;
 
   // Atom-style <link href="url" .../>
-  const attrMatch = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/>/i);
+  const attrMatch = block.match(/<link[^>]+href=["']([^"']+)["'][^>]*\/?>/i);
   if (attrMatch && isValidUrl(attrMatch[1])) return attrMatch[1];
 
-  // Fallback: <guid isPermaLink="true">url</guid>
+  // Atom namespace: <atom:link href="url" .../>
+  const atomMatch = block.match(/<atom:link[^>]+href=["']([^"']+)["'][^>]*\/?>/i);
+  if (atomMatch && isValidUrl(atomMatch[1])) return atomMatch[1];
+
+  // Fallback: <guid isPermaLink="true">url</guid> or plain <guid>url</guid>
   const guid = extractTag(block, "guid");
   if (guid && isValidUrl(guid)) return guid;
 

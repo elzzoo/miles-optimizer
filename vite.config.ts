@@ -37,8 +37,8 @@ export default defineConfig({
         name: 'Miles Optimizer',
         short_name: 'Miles',
         description: 'Comparez cash vs miles — trouvez le moins cher',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#2563EB',
+        background_color: '#F8FAFC',
         display: 'standalone',
         start_url: '/',
         icons: [

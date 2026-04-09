@@ -16,6 +16,9 @@ import { fileURLToPath } from "url";
 import path from "path";
 import flightsRouter from "./server/routes/flights.js";
 import affiliationRouter from "./server/routes/affiliation.js";
+import alertsRouter from "./server/routes/alerts.js";
+import destinationsRouter from "./server/routes/destinations.js";
+import dealsRouter from "./server/routes/deals.js";
 
 const app = express();
 app.use(compression());
@@ -40,7 +43,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src https://fonts.gstatic.com; " +
     "img-src 'self' data:; " +
-    "connect-src 'self' https://api.open-meteo.com https://restcountries.com https://open.er-api.com;"
+    "connect-src 'self' https://api.open-meteo.com https://restcountries.com https://open.er-api.com https://api.opentripmap.com https://api.unsplash.com https://images.unsplash.com https://plausible.io;"
   );
   next();
 });
@@ -72,12 +75,20 @@ app.use("/api/", (req, res, next) => {
 
 app.use("/api", flightsRouter);
 app.use("/api", affiliationRouter);
+app.use("/api/alerts",       alertsRouter);
+app.use("/api/destinations",  destinationsRouter);
+app.use("/api/deals",         dealsRouter);
 
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
 
+// Warm-up: ping every 14 min to prevent Render free tier sleep
+setInterval(() => {
+  fetch(`http://localhost:${PORT}/api/health`).catch(() => {});
+}, 14 * 60 * 1000);
+
 app.listen(PORT, async () => {
-  console.log(`✈️  Miles Optimizer — port ${PORT}`);
+  console.log(`✈️  Miles Optimizer v2 (next) — port ${PORT}`);
   // Pré-charger les caches pour éviter la latence au premier utilisateur
   try {
     const { getExchangeRates } = await import("./server/services/exchangeRates.js");
@@ -89,4 +100,10 @@ app.listen(PORT, async () => {
     await fetchPromos();
     console.log("✅ Promos pré-chargées");
   } catch { console.warn("⚠️  Pré-chargement promos échoué"); }
+
+  // Start alert cron checker
+  try {
+    const { startAlertChecker } = await import("./server/services/alertChecker.js");
+    startAlertChecker();
+  } catch (e) { console.warn("⚠️  Alert checker non démarré:", e.message); }
 });

@@ -1,0 +1,68 @@
+services:
+  # ── Service 1 : Version stable (main) ─────────────────────────
+  - type: web
+    name: miles-optimizer
+    env: node
+    branch: main
+    region: frankfurt
+    buildCommand: npm install --ignore-scripts && npm run build
+    startCommand: node --experimental-strip-types server.js
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: SERPAPI_KEY
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: ANALYTICS_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+  # ── Service 2 : Version next (nouvelle) ───────────────────────
+  - type: web
+    name: miles-optimizer-next
+    env: node
+    branch: next
+    region: frankfurt
+    buildCommand: npm install --ignore-scripts && npm run build
+    startCommand: node --experimental-strip-types server.js
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: SERPAPI_KEY
+        sync: false
+      - key: RAPIDAPI_KEY
+        sync: false
+      - key: ANALYTICS_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+
+      # ── New v2 keys ──────────────────────────────────────────
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        value: "sb_publishable__oIYZKyPeATEvWWcPmcJqw_ioRzGg7E"
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        value: "re_3zPPNJcq_7J2WbVEdyVEEp3WCExwN95vV"
+      - key: UNSPLASH_ACCESS_KEY
+        value: "c_z7CPIpJucOTMmy2zjhjqXcAE86wxhlVAyZ4h2M0dM"
+      - key: OPENTRIPMAP_KEY
+        value: "5ae2e3f221c38a28845f05b6880de920326a8fac233d8009e07c4de8"
+      - key: PLAUSIBLE_DOMAIN
+        value: "miles-optimizer-next.onrender.com"
+      - key: APP_URL
+        value: "https://miles-optimizer-next.onrender.com"

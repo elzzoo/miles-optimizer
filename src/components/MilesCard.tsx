@@ -190,10 +190,15 @@ export default function MilesCard({ program, result, rank, cashUSD, isOneWay, ra
         )}
         {program.bookingUrl && (
           <a
-            href={`/api/go?program=${program.id}&origin=${origin || ""}&dest=${dest || ""}&cabin=${cabin ?? ""}&ref=milescard`}
+            href={program.bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={e => e.stopPropagation()}
+            onClick={e => {
+              e.stopPropagation();
+              // Fire-and-forget analytics — does not block navigation
+              fetch(`/api/go?program=${program.id}&origin=${origin || ""}&dest=${dest || ""}&cabin=${cabin ?? ""}&ref=milescard`)
+                .catch(() => {/* ignore — analytics only */});
+            }}
             className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25 transition-colors border border-indigo-500/25 cursor-pointer"
           >
             {t?.cardBook || "Réserver avec des miles"} ↗

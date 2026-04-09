@@ -38,8 +38,15 @@ router.get("/go", (req, res) => {
   });
   if (clickLog.length > MAX_LOG) clickLog.shift();
 
-  // Redirect to affiliate link or fallback bookingUrl
-  // Validate affiliate URL to prevent open redirect via misconfigured env var
+  // If called via fetch (analytics ping from MilesCard), return 200 — navigation is handled client-side
+  const isFetch = req.headers["sec-fetch-mode"] === "cors" ||
+    req.headers["sec-fetch-mode"] === "no-cors" ||
+    (req.headers["accept"] && !req.headers["accept"].includes("text/html"));
+  if (isFetch) {
+    return res.json({ ok: true });
+  }
+
+  // For direct navigation (fallback), redirect to booking URL
   const affiliateUrl = affiliateLinks[program];
   const candidate = (affiliateUrl && affiliateUrl.startsWith("https://")) ? affiliateUrl : BOOKING_URLS[program];
   if (!candidate || !candidate.startsWith("https://")) {

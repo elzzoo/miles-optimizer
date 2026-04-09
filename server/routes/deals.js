@@ -41,7 +41,7 @@ const PROGRAM_MILES = {
 };
 
 router.get("/", cacheMiddleware(12 * 3600), async (req, res) => {
-  const { PROGRAMS } = await import("../../src/data/programs.js");
+  const { PROGRAMS } = await import("../data/programs.js");
   const programMap = Object.fromEntries(PROGRAMS.map(p => [p.id, p]));
 
   const deals = [];

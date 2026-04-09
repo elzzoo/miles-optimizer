@@ -2,9 +2,9 @@ import cron from "node-cron";
 import { supabaseAdmin, isSupabaseConfigured } from "./supabase.js";
 import { sendAlertEmail } from "./emailAlerts.js";
 import { scoreDeal } from "./dealScorer.js";
-import { PROGRAMS } from "../../src/data/programs.js";
+import { PROGRAMS } from "../data/programs.js";
 import { haversine } from "../../src/utils/distance.js";
-import { airportsMap } from "../../src/data/airports.js";
+import { airportsMap } from "../data/airports.js";
 
 /**
  * Simple miles estimator (mirrors useMilesCalculator logic)

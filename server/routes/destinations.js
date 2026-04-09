@@ -41,9 +41,9 @@ router.get("/where-can-i-go", cacheMiddleware(12 * 3600), async (req, res) => {
   }
 
   // Import PROGRAMS dynamically to avoid ESM issues
-  const { PROGRAMS } = await import("../../src/data/programs.js");
+  const { PROGRAMS } = await import("../data/programs.js");
   const { haversine } = await import("../../src/utils/distance.js");
-  const { airportsMap } = await import("../../src/data/airports.js");
+  const { airportsMap } = await import("../data/airports.js");
 
   try {
     const all = await getDestinationsFrom(from, 20);

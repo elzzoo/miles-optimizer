@@ -55,7 +55,7 @@ services:
       - key: SUPABASE_ANON_KEY
         value: "sb_publishable__oIYZKyPeATEvWWcPmcJqw_ioRzGg7E"
       - key: SUPABASE_SERVICE_KEY
-        sync: false
+        value: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xdXRldXFjZm5jcmJydHZweWJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTc1MTU2NywiZXhwIjoyMDkxMzI3NTY3fQ.pOv6vgwmfXFKGR_LAHnZPvrdEVwnBa_6KMTcWa9koD4"
       - key: RESEND_API_KEY
         value: "re_3zPPNJcq_7J2WbVEdyVEEp3WCExwN95vV"
       - key: UNSPLASH_ACCESS_KEY

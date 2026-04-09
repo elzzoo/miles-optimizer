@@ -191,14 +191,17 @@ export default function App() {
       <section className="px-4 mb-6">
         <div className="max-w-2xl mx-auto">
 
-          {/* Warm-up banner */}
+          {/* Warm-up banner — hidden once server responds */}
           {!isWarm && (
-            <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 px-4 py-3 mb-4 flex items-center gap-3">
+            <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/8 px-4 py-3 mb-4 flex items-center gap-3">
               <svg className="animate-spin w-4 h-4 text-indigo-400 flex-shrink-0" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
               </svg>
-              <p className="text-indigo-400 text-xs">{t.warmupMsg}</p>
+              <div>
+                <p className="text-indigo-300 text-xs font-semibold">{t.warmupMsg}</p>
+                <p className="text-indigo-500 text-[10px] mt-0.5">{lang === "en" ? "The search will be ready in a moment." : "La recherche sera disponible dans un instant."}</p>
+              </div>
             </div>
           )}
 
@@ -473,7 +476,13 @@ export default function App() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                       </svg>
                       <p className="text-slate-300 text-sm font-semibold mb-1">{t.noFlightsTitle}</p>
-                      <p className="text-slate-500 text-xs">{t.noFlightsSub}</p>
+                      <p className="text-slate-500 text-xs mb-3">{t.noFlightsSub}</p>
+                      <button
+                        onClick={handleSearch}
+                        className="text-xs px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 transition-colors"
+                      >
+                        {lang === "en" ? "Try again" : "Réessayer"}
+                      </button>
                     </div>
                   )}
 
@@ -484,7 +493,13 @@ export default function App() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                       </svg>
                       <p className="text-slate-200 text-sm font-bold mb-1">{t.bothFailedTitle}</p>
-                      <p className="text-slate-400 text-xs">{t.bothFailedSub}</p>
+                      <p className="text-slate-400 text-xs mb-3">{t.bothFailedSub}</p>
+                      <button
+                        onClick={handleSearch}
+                        className="text-xs px-4 py-2 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 transition-colors"
+                      >
+                        {lang === "en" ? "Try again" : "Réessayer"}
+                      </button>
                     </div>
                   )}
                 </div>

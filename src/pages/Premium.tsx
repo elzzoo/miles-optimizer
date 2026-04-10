@@ -55,13 +55,25 @@ export default function Premium() {
   const { trackUpgradeClick } = useAnalytics();
   const [waitlistEmail, setWaitlistEmail] = useState("");
   const [waitlisted, setWaitlisted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [open, setOpen] = useState<number | null>(null);
 
-  function handleWaitlist(e: React.FormEvent) {
+  async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
     trackUpgradeClick();
-    // TODO: save to Supabase waitlist table
-    setWaitlisted(true);
+    setSubmitting(true);
+    try {
+      await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: waitlistEmail }),
+      });
+    } catch {
+      // best-effort; still show success
+    } finally {
+      setSubmitting(false);
+      setWaitlisted(true);
+    }
   }
 
   return (
@@ -159,8 +171,8 @@ export default function Premium() {
                 required
                 className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <button type="submit" className="bg-primary text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1D4ED8] transition-colors text-sm">
-                M'inscrire
+              <button type="submit" disabled={submitting} className="bg-primary text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1D4ED8] transition-colors text-sm disabled:opacity-60">
+                {submitting ? "..." : "M'inscrire"}
               </button>
             </form>
           )}

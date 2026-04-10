@@ -19,6 +19,7 @@ import affiliationRouter from "./server/routes/affiliation.js";
 import alertsRouter from "./server/routes/alerts.js";
 import destinationsRouter from "./server/routes/destinations.js";
 import dealsRouter from "./server/routes/deals.js";
+import waitlistRouter from "./server/routes/waitlist.js";
 
 const app = express();
 app.use(compression());
@@ -78,6 +79,7 @@ app.use("/api", affiliationRouter);
 app.use("/api/alerts",       alertsRouter);
 app.use("/api/destinations",  destinationsRouter);
 app.use("/api/deals",         dealsRouter);
+app.use("/api/waitlist",      waitlistRouter);
 
 // Rich status endpoint — shows which integrations are configured
 app.get("/api/status", (req, res) => {

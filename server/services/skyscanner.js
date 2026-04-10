@@ -34,7 +34,17 @@ async function getEntity(iata) {
     }
 
     const j = await r.json();
-    if (j.message?.includes("not subscribed")) throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
+    // RapidAPI quota/subscription errors come as HTTP 200 with a "message" field
+    if (j.message) {
+      const msg = j.message;
+      if (msg.includes("exceeded") || msg.includes("MONTHLY") || msg.includes("quota")) {
+        throw new Error("Quota RapidAPI dépassé — limite mensuelle atteinte sur sky-scrapper (plan Basic). Mise à jour du plan nécessaire sur rapidapi.com");
+      }
+      if (msg.includes("not subscribed") || msg.includes("subscribe")) {
+        throw new Error("Abonnement RapidAPI Sky Scrapper expiré — vérifiez votre plan sur rapidapi.com");
+      }
+      if (!j.data?.length) throw new Error(`RapidAPI: ${msg.slice(0, 120)}`);
+    }
     if (!j.data?.length) continue;
 
     // Try exact skyId match first

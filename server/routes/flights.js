@@ -47,10 +47,12 @@ router.get("/google-flights", async (req, res) => {
     res.json(data);
   } catch (e) {
     console.error("[google-flights]", e.message, e.stack?.split('\n')[1]);
-    const userMsg = e.message.includes("introuvable")
+    const userMsg = e.message.includes("not configured") || e.message.includes("SERPAPI")
+      ? "SERPAPI_KEY non configurée — Google Flights désactivé"
+      : e.message.includes("introuvable")
       ? e.message
-      : `Service Google Flights temporairement indisponible: ${e.message}`;
-    res.status(500).json({ error: userMsg });
+      : `Service Google Flights indisponible: ${e.message}`;
+    res.status(503).json({ error: userMsg, code: "GOOGLE_FLIGHTS_UNAVAILABLE" });
   }
 });
 
@@ -66,16 +68,17 @@ router.get("/skyscanner", async (req, res) => {
     res.json(data);
   } catch (e) {
     console.error("[skyscanner]", e.message, e.stack?.split('\n')[1]);
-    const userMsg = e.message.includes("Quota") || e.message.includes("exceeded") || e.message.includes("429")
-      ? "Quota RapidAPI dépassé — limite mensuelle atteinte (plan gratuit sky-scrapper)"
+    // Pass the full message for quota/subscription/config errors — already localised in skyscanner.js
+    const userMsg = e.message.includes("Quota") || e.message.includes("quota") || e.message.includes("exceeded") || e.message.includes("429") || e.message.includes("MONTHLY")
+      ? e.message
       : e.message.includes("Abonnement") || e.message.includes("not subscribed")
-      ? "Abonnement RapidAPI expiré — vérifiez sky-scrapper sur rapidapi.com"
+      ? e.message
       : e.message.includes("RAPIDAPI_KEY")
-      ? "Clé RapidAPI non configurée (RAPIDAPI_KEY)"
+      ? "Clé RapidAPI non configurée (RAPIDAPI_KEY manquante dans les variables d'environnement)"
       : e.message.includes("introuvable")
       ? e.message
       : `Service Skyscanner indisponible: ${e.message.slice(0, 120)}`;
-    res.status(500).json({ error: userMsg });
+    res.status(503).json({ error: userMsg, code: "SKYSCANNER_UNAVAILABLE" });
   }
 });
 

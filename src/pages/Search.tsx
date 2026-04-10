@@ -28,6 +28,21 @@ function Spinner() {
   );
 }
 
+function buildGoogleFlightsUrl(origin: string, dest: string, depDate: string, retDate?: string, cabin?: number) {
+  const dep = depDate.replace(/-/g, "").slice(2); // YYMMDD
+  const ret = retDate ? retDate.replace(/-/g, "").slice(2) : null;
+  const cl = cabin === 1 ? "c" : ""; // c=business
+  const base = `https://www.google.com/flights#search;f=${origin};t=${dest};d=${dep}${ret ? `;r=${ret}` : ""}${cl ? `;sc=${cl}` : ""}`;
+  return base;
+}
+
+function buildSkyscannerUrl(origin: string, dest: string, depDate: string, retDate?: string) {
+  const dep = depDate.replace(/-/g, "").slice(2); // YYMMDD
+  const ret = retDate ? retDate.replace(/-/g, "").slice(2) : null;
+  if (ret) return `https://www.skyscanner.net/transport/flights/${origin.toLowerCase()}/${dest.toLowerCase()}/${dep}/${ret}/`;
+  return `https://www.skyscanner.net/transport/flights/${origin.toLowerCase()}/${dest.toLowerCase()}/${dep}/`;
+}
+
 export default function Search() {
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
@@ -123,7 +138,8 @@ export default function Search() {
           <div>
             {/* Source trust bar */}
             {searched && (
-              <div className="flex items-center gap-3 text-xs mb-4 flex-wrap">
+              <div className="flex flex-col gap-2 text-xs mb-4">
+                <div className="flex items-center gap-3 flex-wrap">
                 <span className={`flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full border ${
                   gLoading  ? "bg-blue-50 text-blue-600 border-blue-100"
                   : googleFlights ? "bg-green-50 text-green-600 border-green-100"
@@ -149,6 +165,14 @@ export default function Search() {
                 {filteredFlights.length > 0 && !loading && (
                   <span className="text-slate-400 ml-auto">{filteredFlights.length} vol{filteredFlights.length > 1 ? "s" : ""} trouvé{filteredFlights.length > 1 ? "s" : ""}</span>
                 )}
+                </div>
+                {/* Error details row */}
+                {(gError || sError) && !loading && (
+                  <div className="flex flex-col gap-1">
+                    {gError && <p className="text-red-500 text-[10px] leading-snug">Google Flights : {gError.replace("Service Google Flights indisponible: ", "").slice(0, 120)}</p>}
+                    {sError && <p className="text-red-500 text-[10px] leading-snug">Skyscanner : {sError.replace("Service Skyscanner indisponible: ", "").slice(0, 120)}</p>}
+                  </div>
+                )}
               </div>
             )}
 
@@ -158,6 +182,17 @@ export default function Search() {
                 <span>⚠</span>
                 <span>
                   {gError ? "Google Flights" : "Skyscanner"} indisponible — résultats partiels affichés.
+                  {urlOrigin && urlDest && (
+                    <a
+                      href={gError
+                        ? buildSkyscannerUrl(urlOrigin, urlDest, urlDep, urlRet || undefined)
+                        : buildGoogleFlightsUrl(urlOrigin, urlDest, urlDep, urlRet || undefined, urlCabin)}
+                      target="_blank" rel="noopener noreferrer"
+                      className="underline ml-1 font-semibold"
+                    >
+                      Chercher sur {gError ? "Skyscanner" : "Google Flights"} ↗
+                    </a>
+                  )}
                 </span>
               </div>
             )}
@@ -168,18 +203,42 @@ export default function Search() {
             {/* Loading skeletons */}
             {!quota.exhausted && loading && allFlights.length === 0 && <Skeleton variant="card" count={3} />}
 
-            {/* Both failed */}
-            {!quota.exhausted && bothFailed && (
-              <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center mb-6">
-                <p className="text-4xl mb-3">🔌</p>
-                <p className="text-red-700 font-semibold mb-2">Sources de prix indisponibles</p>
-                <p className="text-red-500 text-sm mb-4">Les deux agrégateurs de prix ne répondent pas. L'estimation miles reste disponible.</p>
-                <button
-                  onClick={() => { reset(); search(new URLSearchParams(searchParams)); }}
-                  className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-700 transition-colors"
-                >
-                  Réessayer
-                </button>
+            {/* Both failed — show direct search links */}
+            {!quota.exhausted && bothFailed && urlOrigin && urlDest && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <span className="text-2xl flex-shrink-0">🔍</span>
+                  <div>
+                    <p className="font-semibold text-slate-800 mb-1">Prix cash indisponibles via nos APIs</p>
+                    <p className="text-slate-500 text-sm">Recherchez directement sur les plateformes pour obtenir le prix réel. Les calculs miles ci-contre restent disponibles.</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <a
+                    href={buildGoogleFlightsUrl(urlOrigin, urlDest, urlDep, urlRet || undefined, urlCabin)}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="m21 21-4.35-4.35"/></svg>
+                    Google Flights
+                  </a>
+                  <a
+                    href={buildSkyscannerUrl(urlOrigin, urlDest, urlDep, urlRet || undefined)}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:border-orange-300 hover:bg-orange-50 transition-all"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 19V5m0 0-7 7m7-7 7 7"/></svg>
+                    Skyscanner
+                  </a>
+                </div>
+                <p className="text-center">
+                  <button
+                    onClick={() => { reset(); search(new URLSearchParams(searchParams)); }}
+                    className="text-xs text-slate-500 hover:text-slate-700 underline"
+                  >
+                    Réessayer les APIs
+                  </button>
+                </p>
               </div>
             )}
 

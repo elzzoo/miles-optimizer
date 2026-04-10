@@ -1,15 +1,19 @@
 import { Helmet } from "react-helmet-async";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PROGRAMS } from "../data/programs";
 import { scoreDeal } from "../utils/scoring";
 import DealScore from "../components/miles/DealScore";
 import Card from "../design/components/Card";
 
 export default function Calculator() {
-  const [cashPrice, setCashPrice]   = useState("800");
-  const [miles, setMiles]           = useState("50000");
-  const [taxes, setTaxes]           = useState("60");
-  const [programId, setProgramId]   = useState("aeroplan");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [cashPrice, setCashPrice] = useState(searchParams.get("cash") || "800");
+  const [miles, setMiles]         = useState(searchParams.get("miles") || "50000");
+  const [taxes, setTaxes]     = useState(searchParams.get("taxes") || "60");
+  const [programId, setProgramId] = useState(searchParams.get("program") || "aeroplan");
+  const [copied, setCopied]   = useState(false);
 
   const program = useMemo(() => PROGRAMS.find(p => p.id === programId) ?? PROGRAMS[0], [programId]);
 
@@ -26,6 +30,19 @@ export default function Calculator() {
       score: scoreDeal({ program: p, milesNeeded: Number(miles), taxesUSD: p.taxUSD, cashPriceUSD: Number(cashPrice) }),
     })).sort((a, b) => b.score.centsPerMile - a.score.centsPerMile)
   , [miles, cashPrice]);
+
+  // Sync URL params so the share link works
+  useEffect(() => {
+    const p = new URLSearchParams({ cash: cashPrice, miles, taxes, program: programId });
+    setSearchParams(p, { replace: true });
+  }, [cashPrice, miles, taxes, programId]);
+
+  function handleShare() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  }
 
   return (
     <>
@@ -137,6 +154,17 @@ export default function Calculator() {
               <p className="text-slate-500 text-sm mb-4">par mile utilisé</p>
 
               <DealScore score={score} showDetails size="md" />
+
+              <button
+                onClick={handleShare}
+                className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl py-2.5 hover:border-slate-300 hover:bg-slate-50 transition-all"
+              >
+                {copied ? (
+                  <><span className="text-green-600">✓</span> Lien copié !</>
+                ) : (
+                  <><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 1 1 0-2.684m0 2.684 6.632 3.316m-6.632-6 6.632-3.316m0 0a3 3 0 1 0 5.367-2.684 3 3 0 0 0-5.367 2.684Zm0 9.316a3 3 0 1 0 5.368 2.683 3 3 0 0 0-5.368-2.683Z" /></svg>Partager ce calcul</>
+                )}
+              </button>
 
               {score.savingsUSD > 0 && (
                 <div className="mt-4 bg-green-50 rounded-xl p-3 border border-green-100">

@@ -16,6 +16,8 @@ import { haversine } from "../utils/distance";
 import DealScore from "../components/miles/DealScore";
 import { scoreDeal } from "../utils/scoring";
 import { useAnalytics } from "../hooks/useAnalytics";
+import { useSearchQuota } from "../hooks/useSearchQuota";
+import PaywallBanner from "../components/search/PaywallBanner";
 
 function Spinner() {
   return (
@@ -53,23 +55,27 @@ export default function Search() {
 
   const [searched, setSearched] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const quota = useSearchQuota();
 
   useEffect(() => {
     if (urlOrigin && urlDest && urlDep) {
       reset();
       search(new URLSearchParams(searchParams));
       setSearched(true);
+      quota.increment();
       trackSearch(urlOrigin, urlDest, urlCabin);
     }
   }, []);
 
   const handleSearch = useCallback((params: URLSearchParams) => {
+    if (quota.exhausted) return;
     navigate(`/search?${params.toString()}`);
     reset();
     search(params);
     setSearched(true);
     setSelectedIdx(null);
-  }, [navigate, search, reset]);
+    quota.increment();
+  }, [navigate, search, reset, quota.exhausted]);
 
   const [estEco, estBus] = estimateCash(distMiles, !urlRet);
   const estPrice     = urlCabin === 1 ? estBus : estEco;
@@ -156,11 +162,14 @@ export default function Search() {
               </div>
             )}
 
+            {/* Freemium quota */}
+            <PaywallBanner remaining={quota.remaining} limit={quota.limit} />
+
             {/* Loading skeletons */}
-            {loading && allFlights.length === 0 && <Skeleton variant="card" count={3} />}
+            {!quota.exhausted && loading && allFlights.length === 0 && <Skeleton variant="card" count={3} />}
 
             {/* Both failed */}
-            {bothFailed && (
+            {!quota.exhausted && bothFailed && (
               <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center mb-6">
                 <p className="text-4xl mb-3">🔌</p>
                 <p className="text-red-700 font-semibold mb-2">Sources de prix indisponibles</p>
@@ -176,7 +185,7 @@ export default function Search() {
 
             {/* Flight results */}
             <div className="space-y-3">
-              {filteredFlights.map((f, i) => (
+              {!quota.exhausted && filteredFlights.map((f, i) => (
                 <FlightCard
                   key={i}
                   flight={f}
@@ -190,7 +199,7 @@ export default function Search() {
             </div>
 
             {/* No results (non-failure) */}
-            {!loading && searched && allFlights.length === 0 && !bothFailed && (
+            {!quota.exhausted && !loading && searched && allFlights.length === 0 && !bothFailed && (
               <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 text-center">
                 <p className="text-3xl mb-3">✈️</p>
                 <p className="font-semibold text-slate-700 mb-2">Aucun vol trouvé</p>

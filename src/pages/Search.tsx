@@ -27,10 +27,10 @@ export default function Search() {
   const urlRet    = searchParams.get("retDate") || "";
   const urlCabin  = Number(searchParams.get("cabin") ?? "0") as 0 | 1;
 
-  const { rates }                    = useRates();
+  const rates                         = useRates();
   const { currency }                 = useCurrency();
   const { googleFlights, skyFlights, gLoading, sLoading, gError, sError, loading, allFlights, search, reset } = useFlights();
-  const { filteredFlights, resetFilters } = useFlightFilters(allFlights, false);
+  const { filteredFlights, reset: resetFilters } = useFlightFilters(allFlights, false);
   const origA = airportsMap[urlOrigin];
   const destA  = airportsMap[urlDest];
   const distMiles = origA && destA ? haversine(origA.lat, origA.lon, destA.lat, destA.lon) : 0;

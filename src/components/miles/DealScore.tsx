@@ -13,7 +13,7 @@ export default function DealScore({ score, showDetails = false, size = "md" }: P
   return (
     <div className={`flex flex-col ${size === "sm" ? "gap-0.5" : "gap-1"}`}>
       <div className="flex items-center gap-2">
-        <Badge variant={variant} dot>
+        <Badge variant={variant}>
           {score.label}
         </Badge>
         <span className={`font-bold tabular-nums ${size === "sm" ? "text-xs" : "text-sm"} text-slate-700`}>

@@ -1,19 +1,14 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import Header from "../../components/layout/Header";
 import Footer from "../../components/layout/Footer";
-import StickySearchBar from "../../components/layout/StickySearchBar";
 
 export default function PageLayout() {
-  const { pathname } = useLocation();
-  const isHome = pathname === "/";
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
       <Header />
-      <main>
+      <main className="flex-1">
         <Outlet />
       </main>
-      {isHome && <StickySearchBar />}
       <Footer />
     </div>
   );

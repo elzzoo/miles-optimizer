@@ -27,7 +27,7 @@ function PageLoader() {
 export default function App() {
   return (
     <HelmetProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route element={<PageLayout />}>
             <Route index             element={<Home />} />

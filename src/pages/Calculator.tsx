@@ -49,6 +49,7 @@ export default function Calculator() {
       <Helmet>
         <title>Calculateur cash vs miles | Miles Optimizer</title>
         <meta name="description" content="Calculez la valeur de vos miles en cents par mile. Comparez cash et miles pour votre prochain vol." />
+        <link rel="canonical" href="https://miles-optimizer-next.onrender.com/calculator" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-4 py-10">

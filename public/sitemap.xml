@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Core pages -->
+  <url><loc>https://miles-optimizer-next.onrender.com/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/best-deals</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/explore</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/calculator</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/alerts</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/premium</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+  <!-- Route SEO pages -->
+  <url><loc>https://miles-optimizer-next.onrender.com/dakar-paris</loc><changefreq>weekly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/dakar-new-york</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/abidjan-paris</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/casablanca-paris</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/lagos-london</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/nairobi-paris</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/dakar-istanbul</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/accra-amsterdam</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
+  <!-- Cheap flights landing pages -->
+  <url><loc>https://miles-optimizer-next.onrender.com/cheap-flights-paris</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/cheap-flights-london</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/cheap-flights-new-york</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+
+  <!-- Program guides -->
+  <url><loc>https://miles-optimizer-next.onrender.com/flying-blue-guide</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/flying-aeroplan-guide</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/flying-lifemiles-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://miles-optimizer-next.onrender.com/flying-turkish-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+
+</urlset>

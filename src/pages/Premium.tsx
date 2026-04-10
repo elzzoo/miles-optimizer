@@ -81,6 +81,7 @@ export default function Premium() {
       <Helmet>
         <title>Premium — Miles Optimizer</title>
         <meta name="description" content="Débloquez Miles Optimizer Premium : alertes prix, deals illimités, filtres avancés. 9,90€/mois sans engagement." />
+        <link rel="canonical" href="https://miles-optimizer-next.onrender.com/premium" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-4 py-14">

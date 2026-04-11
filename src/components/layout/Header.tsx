@@ -14,7 +14,7 @@ const NAV = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const quota = useSearchQuota();
+  const quota = useSearchQuota(isPremium);
   const { user, isPremium } = useAuth();
 
   return (

@@ -26,10 +26,10 @@ function saveQuota(quota: { date: string; count: number }) {
   try { localStorage.setItem(KEY, JSON.stringify(quota)); } catch {}
 }
 
-export function useSearchQuota() {
+export function useSearchQuota(isPremium = false) {
   const quota = getQuota();
   const remaining = Math.max(0, FREE_LIMIT - quota.count);
-  const exhausted = quota.count >= FREE_LIMIT;
+    const exhausted = !isPremium && quota.count >= FREE_LIMIT;
 
   function increment() {
     const q = getQuota();

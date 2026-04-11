@@ -20,6 +20,7 @@ import { useSearchQuota } from "../hooks/useSearchQuota";
 import { saveRecentSearch } from "../hooks/useRecentSearches";
 import PaywallBanner from "../components/search/PaywallBanner";
 import AlertModal from "../components/AlertModal";
+import { useAuth } from "../hooks/useAuth";
 
 function Spinner() {
   return (
@@ -114,7 +115,8 @@ export default function Search() {
   const [searched,     setSearched]     = useState(false);
   const [selectedIdx,  setSelectedIdx]  = useState<number | null>(null);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
-  const quota = useSearchQuota();
+const { isPremium } = useAuth();
+    const quota = useSearchQuota(isPremium);
 
   // Redirect to home if no destination
   useEffect(() => {

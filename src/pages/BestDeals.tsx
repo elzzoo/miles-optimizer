@@ -15,7 +15,17 @@ const PROGRAM_ALLIANCE: Record<string, string> = {
   virginatlantic: "Indépendant", alaska: "Indépendant",
 };
 
+// Region → destination airport prefixes
+const REGION_AIRPORTS: Record<string, string[]> = {
+  "Afrique":        ["DSS", "ABJ", "CMN", "LOS", "NBO", "ADD", "CPT", "ACC", "DKR"],
+  "Europe":         ["CDG", "LHR", "MAD", "FCO", "AMS", "FRA", "BCN", "LIS", "VIE"],
+  "Amériques":      ["JFK", "LAX", "MIA", "YUL", "GRU", "EZE", "ORD", "ATL", "SFO"],
+  "Moyen-Orient":   ["DXB", "DOH", "AUH", "IST", "AMM", "BEY", "KWI", "RUH"],
+  "Asie-Pacifique": ["SIN", "BKK", "HKG", "NRT", "ICN", "SYD", "KUL", "PEK", "DEL"],
+};
+
 const ALLIANCES = ["Tous", "Star Alliance", "SkyTeam", "OneWorld", "Indépendant"];
+const REGIONS   = ["Tous", ...Object.keys(REGION_AIRPORTS)];
 
 const meta = buildMeta({
   title:       "Meilleurs deals miles",
@@ -26,11 +36,13 @@ const meta = buildMeta({
 export default function BestDeals() {
   const { deals, loading, error, updatedAt } = useBestDeals();
   const [allianceFilter, setAllianceFilter] = useState("Tous");
+  const [regionFilter, setRegionFilter]     = useState("Tous");
   const [sortBy, setSortBy] = useState<"score" | "savings" | "miles">("score");
   const FREE_LIMIT = 6;
 
   const filtered = (deals ?? [])
     .filter(d => allianceFilter === "Tous" || PROGRAM_ALLIANCE[d.program.id] === allianceFilter)
+    .filter(d => regionFilter === "Tous" || REGION_AIRPORTS[regionFilter]?.includes(d.route.to))
     .sort((a, b) => {
       if (sortBy === "savings") return b.score.savingsUSD - a.score.savingsUSD;
       if (sortBy === "miles")   return a.milesNeeded - b.milesNeeded;
@@ -65,6 +77,23 @@ export default function BestDeals() {
 
         {/* Filters */}
         <div className="space-y-3 mb-6">
+          {/* Region pills */}
+          <div className="flex gap-2 flex-wrap">
+            {REGIONS.map(r => (
+              <button
+                key={r}
+                onClick={() => setRegionFilter(r)}
+                className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                  regionFilter === r
+                    ? "bg-primary text-white border-primary"
+                    : "border-slate-200 text-slate-600 hover:border-slate-400 bg-white"
+                }`}
+              >
+                {r === "Tous" ? "🌍 Toutes destinations" : r}
+              </button>
+            ))}
+          </div>
+
           {/* Alliance pills */}
           <div className="flex gap-2 flex-wrap">
             {ALLIANCES.map(a => (
@@ -129,7 +158,7 @@ export default function BestDeals() {
           <div className="space-y-3">
             {/* Free deals */}
             {freeDeals.map((deal, i) => (
-              <DealCard key={deal.id} deal={deal} rank={i} />
+              <DealCard key={deal.id} deal={deal} rank={i} topDeal={i === 0} />
             ))}
 
             {/* Locked deals (Premium paywall) */}

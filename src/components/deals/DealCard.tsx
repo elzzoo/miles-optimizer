@@ -53,10 +53,23 @@ interface Props {
   deal: Deal;
   rank?: number;
   blurred?: boolean;
+  topDeal?: boolean;
 }
 
-export default function DealCard({ deal, rank, blurred = false }: Props) {
+export default function DealCard({ deal, rank, blurred = false, topDeal = false }: Props) {
   const { trackDealClick, trackBooking } = useAnalytics();
+
+  function handleShare() {
+    const url = `${window.location.origin}/best-deals?highlight=${deal.id}`;
+    const text = `✈️ Deal miles : ${deal.route.label} — ${(deal.milesNeeded / 1000).toFixed(0)}k miles + ${deal.taxesUSD}$ (valeur ${deal.score.centsPerMile}¢/mile) via ${deal.program.name}`;
+    if (navigator.share) {
+      navigator.share({ title: "Miles Optimizer Deal", text, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(`${text}\n${url}`).then(() => {
+        alert("Lien copié !");
+      }).catch(() => {});
+    }
+  }
 
   return (
     <Card hover className={`relative overflow-hidden ${blurred ? "select-none" : ""}`}>
@@ -69,8 +82,16 @@ export default function DealCard({ deal, rank, blurred = false }: Props) {
         </div>
       )}
 
+      {topDeal && (
+        <div className="absolute -top-px left-4">
+          <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-black px-2.5 py-0.5 rounded-b-lg tracking-wide shadow-sm">
+            🔥 Deal du jour
+          </span>
+        </div>
+      )}
+
       {rank !== undefined && (
-        <div className="absolute top-4 left-4">
+        <div className={`absolute left-4 ${topDeal ? "top-7" : "top-4"}`}>
           <span className={`text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center ${
             rank === 0 ? "bg-amber-100 text-amber-700" :
             rank === 1 ? "bg-slate-100 text-slate-600" :
@@ -152,6 +173,16 @@ export default function DealCard({ deal, rank, blurred = false }: Props) {
             >
               Réserver miles ↗
             </a>
+            <button
+              onClick={handleShare}
+              className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              title="Partager ce deal"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+              </svg>
+              Partager
+            </button>
           </div>
         </div>
       </div>

@@ -36,5 +36,7 @@ export function scoreDeal(params: {
   const savingsUSD = Math.round(cashPriceUSD - totalMilesCost);
   const savingsPct = Math.max(0, Math.round((savingsUSD / cashPriceUSD) * 100));
 
-  return { centsPerMile: Math.round(centsPerMile * 10) / 10, label, color, savingsUSD, savingsPct, worthIt, totalMilesCost: Math.round(totalMilesCost) };
+  // Round to exactly 2 decimal places to avoid floating-point artifacts (e.g. 1.7500000000000002)
+  const cpmRounded = parseFloat((Math.round(centsPerMile * 100) / 100).toFixed(2));
+  return { centsPerMile: cpmRounded, label, color, savingsUSD, savingsPct, worthIt, totalMilesCost: Math.round(totalMilesCost) };
 }

@@ -29,38 +29,55 @@ function Spinner() {
 }
 
 function buildGoogleFlightsUrl(origin: string, dest: string, depDate: string, retDate?: string, cabin?: number) {
-  const dep = depDate.replace(/-/g, "").slice(2); // YYMMDD
+  const dep = depDate.replace(/-/g, "").slice(2);
   const ret = retDate ? retDate.replace(/-/g, "").slice(2) : null;
-  const cl = cabin === 1 ? "c" : ""; // c=business
-  const base = `https://www.google.com/flights#search;f=${origin};t=${dest};d=${dep}${ret ? `;r=${ret}` : ""}${cl ? `;sc=${cl}` : ""}`;
-  return base;
+  const cl  = cabin === 1 ? "c" : "";
+  return `https://www.google.com/flights#search;f=${origin};t=${dest};d=${dep}${ret ? `;r=${ret}` : ""}${cl ? `;sc=${cl}` : ""}`;
 }
 
-function buildSkyscannerUrl(origin: string, dest: string, depDate: string, retDate?: string) {
-  const dep = depDate.replace(/-/g, "").slice(2); // YYMMDD
-  const ret = retDate ? retDate.replace(/-/g, "").slice(2) : null;
-  if (ret) return `https://www.skyscanner.net/transport/flights/${origin.toLowerCase()}/${dest.toLowerCase()}/${dep}/${ret}/`;
-  return `https://www.skyscanner.net/transport/flights/${origin.toLowerCase()}/${dest.toLowerCase()}/${dep}/`;
+function buildAviasalesUrl(origin: string, dest: string, depDate: string, retDate?: string) {
+  const dep = new Date(depDate);
+  const dd  = String(dep.getDate()).padStart(2, "0");
+  const mm  = String(dep.getMonth() + 1).padStart(2, "0");
+  if (retDate) {
+    const ret = new Date(retDate);
+    const rdd = String(ret.getDate()).padStart(2, "0");
+    const rmm = String(ret.getMonth() + 1).padStart(2, "0");
+    return `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}${rdd}${rmm}?marker=714947`;
+  }
+  return `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1?marker=714947`;
 }
+
+const SOURCE_LABEL: Record<string, string> = {
+  duffel:        "Duffel",
+  travelpayouts: "Aviasales",
+  serpapi:       "Google Flights",
+  google:        "Google Flights",
+};
 
 export default function Search() {
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
   const { trackSearch, trackBooking } = useAnalytics();
 
-  const urlOrigin = searchParams.get("origin") || "DSS";
-  const urlDest   = searchParams.get("dest")   || "";
+  // Bug 2: redirect if missing origin or dest
+  const rawOrigin = searchParams.get("origin");
+  const rawDest   = searchParams.get("dest");
+
+  // Inject default dates if missing (Bug 2 + Bug 3)
+  const urlOrigin = rawOrigin || "DSS";
+  const urlDest   = rawDest   || "";
   const urlDep    = searchParams.get("depDate") || addDays(today, 30);
   const urlRet    = searchParams.get("retDate") || "";
   const urlCabin  = Number(searchParams.get("cabin") ?? "0") as 0 | 1;
 
-  const rates            = useRates();
-  const { currency }     = useCurrency();
-  const { googleFlights, skyFlights, gLoading, sLoading, gError, sError, loading, allFlights, search, reset } = useFlights();
+  const rates        = useRates();
+  const { currency } = useCurrency();
+  const { flights: allFlights, loading, error, source, bestApiPrice: apiBestPrice, search, reset } = useFlights();
   const { filteredFlights } = useFlightFilters(allFlights, false);
 
-  const origA = airportsMap[urlOrigin];
-  const destA  = airportsMap[urlDest];
+  const origA     = airportsMap[urlOrigin];
+  const destA     = airportsMap[urlDest];
   const distMiles = origA && destA ? haversine(origA.lat, origA.lon, destA.lat, destA.lon) : 0;
 
   const milesResults = useMilesCalculator({
@@ -68,18 +85,29 @@ export default function Search() {
     distMiles, isOneWay: !urlRet, passengers: 1, rates, milesOwned: false,
   });
 
-  const [searched, setSearched] = useState(false);
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
+  const [searched,     setSearched]     = useState(false);
+  const [selectedIdx,  setSelectedIdx]  = useState<number | null>(null);
   const quota = useSearchQuota();
 
+  // Redirect to home if no destination
   useEffect(() => {
-    if (urlOrigin && urlDest && urlDep) {
+    if (!rawDest) {
+      navigate("/", { replace: true });
+    }
+  }, [rawDest, navigate]);
+
+  useEffect(() => {
+    if (rawDest && urlDep) {
+      // Build params with injected defaults
+      const p = new URLSearchParams(searchParams);
+      if (!p.get("depDate")) p.set("depDate", urlDep);
       reset();
-      search(new URLSearchParams(searchParams));
+      search(p);
       setSearched(true);
       quota.increment();
       trackSearch(urlOrigin, urlDest, urlCabin);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSearch = useCallback((params: URLSearchParams) => {
@@ -93,19 +121,21 @@ export default function Search() {
   }, [navigate, search, reset, quota.exhausted]);
 
   const [estEco, estBus] = estimateCash(distMiles, !urlRet);
-  const estPrice     = urlCabin === 1 ? estBus : estEco;
+  const estPrice    = urlCabin === 1 ? estBus : estEco;
   const bestApiPrice = filteredFlights.length > 0 ? Math.min(...filteredFlights.map(f => f.price).filter(Boolean)) : null;
-  const cashUSD  = bestApiPrice ?? estPrice;
-  const isReal   = !!bestApiPrice;
+  const cashUSD     = bestApiPrice ?? estPrice;
+  const isReal      = !!bestApiPrice;
 
-  const bothFailed    = !loading && searched && allFlights.length === 0 && !!gError && !!sError;
-  const partialFailed = !loading && searched && allFlights.length > 0 && (!!gError || !!sError);
+  const allFailed = !loading && searched && allFlights.length === 0 && !!error;
+  const sourceLabel = source ? (SOURCE_LABEL[source] || source) : null;
+
+  if (!rawDest) return null; // redirecting
 
   return (
     <>
       <Helmet>
         <title>
-          {urlOrigin && urlDest ? `Vols ${urlOrigin} → ${urlDest} | Miles Optimizer` : "Recherche de vols | Miles Optimizer"}
+          {urlDest ? `Vols ${urlOrigin} → ${urlDest} | Miles Optimizer` : "Recherche de vols | Miles Optimizer"}
         </title>
       </Helmet>
 
@@ -119,7 +149,7 @@ export default function Search() {
       <div className="max-w-5xl mx-auto px-4 py-8">
 
         {/* Route header */}
-        {urlOrigin && urlDest && (
+        {urlDest && (
           <div className="flex items-center gap-3 mb-6">
             <h1 className="text-2xl font-bold text-slate-900">
               {origA?.flag} {origA ? (origA.city || urlOrigin) : urlOrigin}
@@ -138,62 +168,27 @@ export default function Search() {
           <div>
             {/* Source trust bar */}
             {searched && (
-              <div className="flex flex-col gap-2 text-xs mb-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                <span className={`flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full border ${
-                  gLoading  ? "bg-blue-50 text-blue-600 border-blue-100"
-                  : googleFlights ? "bg-green-50 text-green-600 border-green-100"
-                  : gError  ? "bg-red-50 text-red-500 border-red-100"
-                  : "hidden"
-                }`}>
-                  {gLoading && <Spinner />}
-                  {!gLoading && googleFlights && <span>✓</span>}
-                  {!gLoading && gError && <span>✕</span>}
-                  Google Flights
-                </span>
-                <span className={`flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full border ${
-                  sLoading  ? "bg-orange-50 text-orange-600 border-orange-100"
-                  : skyFlights ? "bg-green-50 text-green-600 border-green-100"
-                  : sError  ? "bg-red-50 text-red-500 border-red-100"
-                  : "hidden"
-                }`}>
-                  {sLoading && <Spinner />}
-                  {!sLoading && skyFlights && <span>✓</span>}
-                  {!sLoading && sError && <span>✕</span>}
-                  Skyscanner
-                </span>
+              <div className="flex items-center gap-3 flex-wrap text-xs mb-4">
+                {loading && (
+                  <span className="flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full border bg-blue-50 text-blue-600 border-blue-100">
+                    <Spinner /> Recherche en cours…
+                  </span>
+                )}
+                {!loading && sourceLabel && (
+                  <span className="flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full border bg-green-50 text-green-600 border-green-100">
+                    ✓ {sourceLabel}
+                  </span>
+                )}
+                {!loading && error && !allFailed && (
+                  <span className="flex items-center gap-1.5 font-medium px-2.5 py-1 rounded-full border bg-red-50 text-red-500 border-red-100">
+                    ✕ Erreur partielle
+                  </span>
+                )}
                 {filteredFlights.length > 0 && !loading && (
-                  <span className="text-slate-400 ml-auto">{filteredFlights.length} vol{filteredFlights.length > 1 ? "s" : ""} trouvé{filteredFlights.length > 1 ? "s" : ""}</span>
+                  <span className="text-slate-400 ml-auto">
+                    {filteredFlights.length} vol{filteredFlights.length > 1 ? "s" : ""} trouvé{filteredFlights.length > 1 ? "s" : ""}
+                  </span>
                 )}
-                </div>
-                {/* Error details row */}
-                {(gError || sError) && !loading && (
-                  <div className="flex flex-col gap-1">
-                    {gError && <p className="text-red-500 text-[10px] leading-snug">Google Flights : {gError.replace("Service Google Flights indisponible: ", "").slice(0, 120)}</p>}
-                    {sError && <p className="text-red-500 text-[10px] leading-snug">Skyscanner : {sError.replace("Service Skyscanner indisponible: ", "").slice(0, 120)}</p>}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Partial failure notice */}
-            {partialFailed && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-xs text-amber-700 mb-4 flex items-center gap-2">
-                <span>⚠</span>
-                <span>
-                  {gError ? "Google Flights" : "Skyscanner"} indisponible — résultats partiels affichés.
-                  {urlOrigin && urlDest && (
-                    <a
-                      href={gError
-                        ? buildSkyscannerUrl(urlOrigin, urlDest, urlDep, urlRet || undefined)
-                        : buildGoogleFlightsUrl(urlOrigin, urlDest, urlDep, urlRet || undefined, urlCabin)}
-                      target="_blank" rel="noopener noreferrer"
-                      className="underline ml-1 font-semibold"
-                    >
-                      Chercher sur {gError ? "Skyscanner" : "Google Flights"} ↗
-                    </a>
-                  )}
-                </span>
               </div>
             )}
 
@@ -201,16 +196,18 @@ export default function Search() {
             <PaywallBanner remaining={quota.remaining} limit={quota.limit} />
 
             {/* Loading skeletons */}
-            {!quota.exhausted && loading && allFlights.length === 0 && <Skeleton variant="card" count={3} />}
+            {!quota.exhausted && loading && <Skeleton variant="card" count={3} />}
 
-            {/* Both failed — show direct search links */}
-            {!quota.exhausted && bothFailed && urlOrigin && urlDest && (
+            {/* All failed */}
+            {!quota.exhausted && allFailed && urlDest && (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 mb-6">
                 <div className="flex items-start gap-3 mb-4">
                   <span className="text-2xl flex-shrink-0">🔍</span>
                   <div>
-                    <p className="font-semibold text-slate-800 mb-1">Prix cash indisponibles via nos APIs</p>
-                    <p className="text-slate-500 text-sm">Recherchez directement sur les plateformes pour obtenir le prix réel. Les calculs miles ci-contre restent disponibles.</p>
+                    <p className="font-semibold text-slate-800 mb-1">
+                      Prix indisponibles momentanément, vérifiez les programmes miles ci-contre
+                    </p>
+                    <p className="text-slate-500 text-sm">Recherchez directement sur ces plateformes pour le prix cash :</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-4">
@@ -219,16 +216,14 @@ export default function Search() {
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:border-blue-300 hover:bg-blue-50 transition-all"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path strokeLinecap="round" d="m21 21-4.35-4.35"/></svg>
-                    Google Flights
+                    Google Flights ↗
                   </a>
                   <a
-                    href={buildSkyscannerUrl(urlOrigin, urlDest, urlDep, urlRet || undefined)}
+                    href={buildAviasalesUrl(urlOrigin, urlDest, urlDep, urlRet || undefined)}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 hover:border-orange-300 hover:bg-orange-50 transition-all"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M12 19V5m0 0-7 7m7-7 7 7"/></svg>
-                    Skyscanner
+                    Aviasales ↗
                   </a>
                 </div>
                 <p className="text-center">
@@ -236,7 +231,7 @@ export default function Search() {
                     onClick={() => { reset(); search(new URLSearchParams(searchParams)); }}
                     className="text-xs text-slate-500 hover:text-slate-700 underline"
                   >
-                    Réessayer les APIs
+                    Réessayer
                   </button>
                 </p>
               </div>
@@ -257,8 +252,8 @@ export default function Search() {
               ))}
             </div>
 
-            {/* No results (non-failure) */}
-            {!quota.exhausted && !loading && searched && allFlights.length === 0 && !bothFailed && (
+            {/* No results */}
+            {!quota.exhausted && !loading && searched && allFlights.length === 0 && !allFailed && (
               <div className="bg-slate-50 rounded-2xl border border-slate-200 p-8 text-center">
                 <p className="text-3xl mb-3">✈️</p>
                 <p className="font-semibold text-slate-700 mb-2">Aucun vol trouvé</p>
@@ -277,16 +272,13 @@ export default function Search() {
               <div className="text-3xl font-black text-slate-900">
                 {formatAmount(convert(cashUSD, currency, rates), currency)}
               </div>
-              {!isReal && (
+              {!isReal ? (
                 <p className="text-xs text-amber-500 mt-1 flex items-center gap-1">
-                  <span>⚠</span>
-                  <span>Estimation — les vrais prix varient</span>
+                  <span>⚠</span><span>Estimation — les vrais prix varient</span>
                 </p>
-              )}
-              {isReal && (
+              ) : (
                 <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                  <span>✓</span>
-                  <span>Prix réel mis à jour à l'instant</span>
+                  <span>✓</span><span>Prix réel · {sourceLabel}</span>
                 </p>
               )}
             </div>
@@ -339,9 +331,8 @@ export default function Search() {
               })}
             </div>
 
-            {/* Data freshness note */}
             <p className="text-[10px] text-slate-400 mt-3 text-center">
-              Miles calculés sur base des grilles tarifaires publiées. Taxes et surcarburant non inclus dans les miles.
+              Miles calculés sur base des grilles tarifaires publiées. Taxes et surcarburant non inclus.
             </p>
           </div>
         </div>

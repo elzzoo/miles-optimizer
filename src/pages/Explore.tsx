@@ -2,6 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DestinationGrid from "../components/destinations/DestinationGrid";
+import { today, addDays } from "../utils/dates";
 
 export default function Explore() {
   const [from, setFrom]           = useState("DSS");
@@ -118,7 +119,7 @@ export default function Explore() {
             ) : (
               <DestinationGrid
                 from={from}
-                onSelect={(iata) => navigate(`/search?origin=${from}&dest=${iata}`)}
+                onSelect={(iata) => navigate(`/search?origin=${from}&dest=${iata}&depDate=${addDays(today, 30)}&retDate=${addDays(today, 37)}`)}
               />
             )}
           </div>
@@ -127,7 +128,7 @@ export default function Explore() {
             <p className="text-sm text-slate-500 mb-5">Destinations depuis <strong>{from}</strong></p>
             <DestinationGrid
               from={from}
-              onSelect={(iata) => navigate(`/search?origin=${from}&dest=${iata}`)}
+              onSelect={(iata) => navigate(`/search?origin=${from}&dest=${iata}&depDate=${addDays(today, 30)}&retDate=${addDays(today, 37)}`)}
             />
           </>
         )}

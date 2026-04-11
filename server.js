@@ -80,17 +80,17 @@ app.get("/api/status", (req, res) => {
       rapidapi:      !!process.env.RAPIDAPI_KEY,
       unsplash:      !!process.env.UNSPLASH_ACCESS_KEY,
       travelpayouts: !!(process.env.TRAVELPAYOUTS_TOKEN && process.env.TRAVELPAYOUTS_MARKER),
-      duffel:        !!process.env.DUFFEL_API_TOKEN,
+      duffel:        !!(process.env.DUFFEL_TOKEN || process.env.DUFFEL_API_TOKEN),
+      redis:         !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
     },
     ts: new Date().toISOString(),
   });
 });
 
+app.use("/api/flights",        searchLimit);
 app.use("/api/google-flights", searchLimit);
-app.use("/api/skyscanner",     searchLimit);
-app.use("/api/duffel-flights", searchLimit);
 app.use("/api/", (req, res, next) => {
-  if (req.path === "/google-flights" || req.path === "/skyscanner") return next();
+  if (req.path === "/flights" || req.path === "/google-flights") return next();
   generalLimit(req, res, next);
 });
 

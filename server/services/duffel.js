@@ -1,4 +1,5 @@
-const TOKEN = process.env.DUFFEL_API_TOKEN;
+// Support both DUFFEL_TOKEN (new) and DUFFEL_API_TOKEN (legacy)
+const TOKEN = process.env.DUFFEL_TOKEN || process.env.DUFFEL_API_TOKEN;
 const BASE  = "https://api.duffel.com";
 
 function headers() {
@@ -10,9 +11,7 @@ function headers() {
   };
 }
 
-/**
- * Parse ISO 8601 duration (PT14H30M, PT2H, PT45M) → minutes
- */
+/** Parse ISO 8601 duration PT14H30M → minutes */
 function parseDuration(iso) {
   if (!iso) return undefined;
   const h = iso.match(/(\d+)H/)?.[1] ?? 0;
@@ -20,29 +19,28 @@ function parseDuration(iso) {
   return Number(h) * 60 + Number(m) || undefined;
 }
 
-/**
- * Map a single Duffel offer to our internal Flight shape.
- */
 function mapOffer(offer) {
   const slice   = offer.slices?.[0];
   const segment = slice?.segments?.[0];
   return {
     price:    Math.round(parseFloat(offer.total_amount || "0")),
-    airline:  segment?.marketing_carrier?.iata_code || "—",
+    airline:  segment?.marketing_carrier?.name || segment?.marketing_carrier?.iata_code || "—",
     direct:   (slice?.segments?.length ?? 1) === 1,
     stops:    (slice?.segments?.length ?? 1) - 1,
     duration: parseDuration(slice?.duration),
     depTime:  segment?.departing_at ?? undefined,
     source:   "duffel",
+    offerId:  offer.id,
   };
 }
 
 /**
- * Search flights via Duffel API (offer_requests with return_offers=true).
- * Throws on config/network errors; returns { best_flights, other_flights, source } on success.
+ * Search flights via Duffel API.
+ * Throws on config/network errors.
+ * Returns { flights: Flight[], source: "duffel" }
  */
 export async function searchDuffelFlights({ origin, dest, depDate, retDate, cabin, passengers = 1 }) {
-  if (!TOKEN) throw new Error("DUFFEL_API_TOKEN not configured");
+  if (!TOKEN) throw new Error("DUFFEL_TOKEN not configured");
 
   const cabinClass    = cabin === "1" || cabin === 1 ? "business" : "economy";
   const passengerList = Array.from({ length: Number(passengers) || 1 }, () => ({ type: "adult" }));
@@ -50,15 +48,11 @@ export async function searchDuffelFlights({ origin, dest, depDate, retDate, cabi
   const slices = [{ origin, destination: dest, departure_date: depDate }];
   if (retDate) slices.push({ origin: dest, destination: origin, departure_date: retDate });
 
-  const body = JSON.stringify({
-    data: { slices, passengers: passengerList, cabin_class: cabinClass },
-  });
-
   const r = await fetch(`${BASE}/air/offer_requests?return_offers=true`, {
     method:  "POST",
     headers: headers(),
-    body,
-    signal:  AbortSignal.timeout(20000),
+    body:    JSON.stringify({ data: { slices, passengers: passengerList, cabin_class: cabinClass } }),
+    signal:  AbortSignal.timeout(8000),
   });
 
   if (!r.ok) {
@@ -71,19 +65,13 @@ export async function searchDuffelFlights({ origin, dest, depDate, retDate, cabi
   const json   = await r.json();
   const offers = json.data?.offers ?? [];
 
-  if (!offers.length) return { best_flights: [], other_flights: [], source: "duffel" };
-
-  const mapped = offers
+  const flights = offers
     .map(mapOffer)
     .filter(f => f.price > 0)
     .sort((a, b) => a.price - b.price)
-    .slice(0, 10);
+    .slice(0, 8);
 
-  return {
-    best_flights:  mapped.slice(0, 3),
-    other_flights: mapped.slice(3),
-    source: "duffel",
-  };
+  return { flights, source: "duffel" };
 }
 
 export const duffelConfigured = () => !!TOKEN;

@@ -27,7 +27,7 @@ const PLANS = [
     name: "Premium",
     price: "9,90€",
     period: "/mois",
-    cta: "Commencer — 9,90€/mois",
+    cta: "Rejoindre la liste d'attente →",
     ctaHref: "#waitlist",
     highlight: true,
     badge: "Le plus populaire",

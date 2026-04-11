@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getStripe, stripeConfigured } from "../services/stripe.js";
-import { createClient } from "../services/supabase.js";
+import { supabase } from "../services/supabase.js";
 
 const router = Router();
 
@@ -63,7 +63,6 @@ router.post("/webhook", async (req, res) => {
 
     if (userId) {
       try {
-        const supabase = createClient();
         await supabase
           .from("profiles")
           .upsert({ id: userId, is_premium: true, stripe_customer_id: customerId, updated_at: new Date().toISOString() });
@@ -80,7 +79,6 @@ router.post("/webhook", async (req, res) => {
     const customerId   = subscription.customer;
 
     try {
-      const supabase = createClient();
       await supabase
         .from("profiles")
         .update({ is_premium: false, updated_at: new Date().toISOString() })

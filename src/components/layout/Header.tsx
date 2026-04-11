@@ -14,9 +14,9 @@ const NAV = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const quota = useSearchQuota(isPremium);
   const { user, isPremium } = useAuth();
 
+    const quota = useSearchQuota(isPremium);
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-6">
@@ -74,8 +74,11 @@ export default function Header() {
           {/* Search quota pill */}
           {!quota.exhausted ? (
             <span className="hidden md:flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
-              {quota.remaining} recherche{quota.remaining > 1 ? "s" : ""} gratuite{quota.remaining > 1 ? "s" : ""}
+                    {isPremium ? (
+        <span>✓ Illimité</span>
+      ) : (
+        <><span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />{quota.remaining} recherche{quota.remaining > 1 ? "s" : ""} gratuite{quota.remaining > 1 ? "s" : ""}</>
+      )}
             </span>
           ) : (
             <Link to="/premium" className="hidden md:flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full font-semibold hover:bg-amber-100 transition-colors">

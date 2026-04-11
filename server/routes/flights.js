@@ -5,6 +5,8 @@ import { fetchPromos } from "../services/promos.js";
 import { getExchangeRates } from "../services/exchangeRates.js";
 import { getWeather } from "../services/weather.js";
 import { getCountryInfo } from "../services/countryInfo.js";
+import { getCheapestPrice, tpConfigured } from "../services/travelpayouts.js";
+import { searchDuffelFlights, duffelConfigured } from "../services/duffel.js";
 
 const router = Router();
 
@@ -145,6 +147,56 @@ router.get("/country", async (req, res) => {
 
 router.get("/health", (req, res) => {
   res.json({ ok: true, cacheSize: apiCache.size, ts: new Date().toISOString() });
+});
+
+// ── Travelpayouts: cheapest price for a route ────────────────────────────────
+router.get("/tp-prices", async (req, res) => {
+  if (!tpConfigured()) {
+    return res.status(503).json({ error: "Travelpayouts non configuré", configured: false });
+  }
+
+  const { origin, dest, month } = req.query;
+  if (!origin || !dest) return res.status(400).json({ error: "origin et dest requis" });
+
+  const cacheKey = `tp:${origin}:${dest}:${month || "next"}`;
+  const cached   = getCached(cacheKey);
+  if (cached) return res.json({ ...cached, _cached: true });
+
+  try {
+    const price = await getCheapestPrice(origin, dest, month || null);
+    const data  = { price, origin, dest, month: month || null, configured: true };
+    setCache(cacheKey, data);
+    res.json(data);
+  } catch (e) {
+    console.error("[tp-prices]", e.message);
+    res.status(503).json({ error: e.message, configured: true });
+  }
+});
+
+// ── Duffel: live flight offers ────────────────────────────────────────────────
+router.get("/duffel-flights", async (req, res) => {
+  if (!duffelConfigured()) {
+    return res.status(503).json({
+      error: "Duffel non configuré — DUFFEL_API_TOKEN manquant",
+      code:  "DUFFEL_UNAVAILABLE",
+    });
+  }
+
+  const err = validateParams(req, res);
+  if (err) return;
+
+  const cacheKey = `duffel:${JSON.stringify(req.query)}`;
+  const cached   = getCached(cacheKey);
+  if (cached) return res.json({ ...cached, _cached: true });
+
+  try {
+    const data = await searchDuffelFlights(req.query);
+    setCache(cacheKey, data);
+    res.json(data);
+  } catch (e) {
+    console.error("[duffel-flights]", e.message);
+    res.status(503).json({ error: `Service Duffel indisponible: ${e.message}`, code: "DUFFEL_UNAVAILABLE" });
+  }
 });
 
 export default router;

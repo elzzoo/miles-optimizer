@@ -33,9 +33,11 @@ export default function FlightCard({ flight, idx, selectedIdx, onSelect, rates, 
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 border ${
               flight.source === "google"
                 ? "bg-blue-50 text-blue-600 border-blue-100"
+                : flight.source === "duffel"
+                ? "bg-purple-50 text-purple-600 border-purple-100"
                 : "bg-orange-50 text-orange-600 border-orange-100"
             }`}>
-              {flight.source === "google" ? "Google Flights" : "Skyscanner"}
+              {flight.source === "google" ? "Google Flights" : flight.source === "duffel" ? "Duffel" : "Skyscanner"}
             </span>
             <span className="font-semibold text-slate-800 text-sm truncate">{flight.airline}</span>
           </div>

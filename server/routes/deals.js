@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { cacheMiddleware } from "../middleware/cache.js";
 import { scoreDeal } from "../services/dealScorer.js";
+import { getCheapestPrice, buildAffiliateLink, tpConfigured } from "../services/travelpayouts.js";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ const TOP_ROUTES = [
   { from: "CPT", to: "LHR", label: "Le Cap → Londres" },
 ];
 
-// Realistic cash price estimates per route (USD, economy round-trip)
+// Fallback cash price estimates per route (USD, economy) — used when TP unavailable
 const ROUTE_PRICES = {
   "DSS-CDG": 650,  "DSS-JFK": 1100, "DSS-DXB": 720,  "DSS-IST": 600,
   "ABJ-CDG": 700,  "ABJ-LHR": 850,  "CMN-CDG": 400,  "CMN-JFK": 900,
@@ -42,13 +43,28 @@ const PROGRAM_MILES = {
 
 router.get("/", cacheMiddleware(12 * 3600), async (req, res) => {
   const { PROGRAMS } = await import("../data/programs.js");
-  const programMap = Object.fromEntries(PROGRAMS.map(p => [p.id, p]));
+  const programMap   = Object.fromEntries(PROGRAMS.map(p => [p.id, p]));
+
+  // Pre-fetch Travelpayouts prices in parallel for all unique routes (best-effort, 6h cache)
+  const tpPriceMap = {};
+  if (tpConfigured()) {
+    const uniqueRoutes = [...new Set(TOP_ROUTES.map(r => `${r.from}-${r.to}`))];
+    await Promise.allSettled(
+      uniqueRoutes.map(async (key) => {
+        const [from, to] = key.split("-");
+        const price = await getCheapestPrice(from, to).catch(() => null);
+        tpPriceMap[key] = price;
+      })
+    );
+  }
 
   const deals = [];
 
   for (const route of TOP_ROUTES) {
-    const key = `${route.from}-${route.to}`;
-    const cashPriceUSD = ROUTE_PRICES[key] ?? 700;
+    const key          = `${route.from}-${route.to}`;
+    const tpPrice      = tpPriceMap[key] ?? null;
+    const cashPriceUSD = tpPrice ?? ROUTE_PRICES[key] ?? 700;
+    const tpUrl        = buildAffiliateLink(route.from, route.to);
 
     for (const [programId, routeMiles] of Object.entries(PROGRAM_MILES)) {
       const milesNeeded = routeMiles[key];
@@ -66,23 +82,29 @@ router.get("/", cacheMiddleware(12 * 3600), async (req, res) => {
 
       if (score.centsPerMile >= 1.0) {
         deals.push({
-          id:           `${programId}-${key}`,
+          id:          `${programId}-${key}`,
           route,
-          program:      { id: program.id, name: program.name, short: program.short, emoji: program.emoji, bookingUrl: program.bookingUrl },
+          program:     { id: program.id, name: program.name, short: program.short, emoji: program.emoji, bookingUrl: program.bookingUrl },
           cashPriceUSD,
+          tpPrice,          // real Travelpayouts price (null = using estimate)
+          tpUrl,            // Aviasales affiliate link
           milesNeeded,
-          taxesUSD:     program.taxUSD ?? 60,
+          taxesUSD:    program.taxUSD ?? 60,
           score,
-          updatedAt:    new Date().toISOString(),
+          updatedAt:   new Date().toISOString(),
         });
       }
     }
   }
 
-  // Sort by score
   deals.sort((a, b) => b.score.centsPerMile - a.score.centsPerMile);
 
-  res.json({ deals: deals.slice(0, 30), total: deals.length, updatedAt: new Date().toISOString() });
+  res.json({
+    deals:     deals.slice(0, 30),
+    total:     deals.length,
+    tpEnabled: tpConfigured(),
+    updatedAt: new Date().toISOString(),
+  });
 });
 
 export default router;

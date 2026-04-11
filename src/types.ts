@@ -15,7 +15,7 @@ export interface Flight {
   stops: number;
   duration: number | undefined;
   depTime: string | undefined;
-  source: "google" | "sky";
+  source: "google" | "sky" | "duffel";
 }
 
 export interface Program {

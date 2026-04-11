@@ -15,6 +15,8 @@ interface Deal {
   route: { from: string; to: string; label: string };
   program: { id: string; name: string; short: string; emoji: string; bookingUrl: string };
   cashPriceUSD: number;
+  tpPrice?: number | null;   // real Travelpayouts price (null = using estimate)
+  tpUrl?: string | null;     // Aviasales affiliate link
   milesNeeded: number;
   taxesUSD: number;
   score: {
@@ -83,9 +85,25 @@ export default function DealCard({ deal, rank, blurred = false }: Props) {
             {(deal.milesNeeded / 1000).toFixed(0)}k
           </div>
           <div className="text-xs text-slate-500 mb-2">miles + {deal.taxesUSD}$</div>
-          <div className="text-xs text-slate-400 line-through">{deal.cashPriceUSD}$ cash</div>
+          <div className="text-xs mb-2">
+            <span className="line-through text-slate-400">{deal.cashPriceUSD}$</span>
+            {deal.tpPrice && deal.tpPrice !== deal.cashPriceUSD && (
+              <span className="ml-1.5 text-emerald-600 font-semibold">{deal.tpPrice}$ réel</span>
+            )}
+            <span className="text-slate-400"> cash</span>
+          </div>
 
           <div className="mt-2 flex flex-col items-end gap-1.5">
+            {deal.tpUrl && (
+              <a
+                href={deal.tpUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"
+              >
+                ✈️ Acheter cash
+              </a>
+            )}
             <a
               href={getSearchUrl(deal.route.from, deal.route.to)}
               className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-primary transition-colors"
@@ -103,7 +121,7 @@ export default function DealCard({ deal, rank, blurred = false }: Props) {
               }}
               className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
             >
-              Réserver ↗
+              Réserver miles ↗
             </a>
           </div>
         </div>

@@ -42,21 +42,46 @@ function parseSkyFlights(data: unknown): Flight[] {
     .slice(0, 5);
 }
 
+function parseDuffelFlights(data: unknown): Flight[] {
+  if (!data) return [];
+  const d = data as any;
+  const all = [...(d.best_flights || []), ...(d.other_flights || [])];
+  return all
+    .map((f: any) => ({
+      price:    f.price,
+      airline:  f.airline || "—",
+      direct:   f.direct ?? (f.stops === 0),
+      stops:    f.stops ?? 0,
+      duration: f.duration,
+      depTime:  f.depTime,
+      source:   "duffel" as const,
+    }))
+    .filter(f => f.price)
+    .sort((a, b) => a.price - b.price)
+    .slice(0, 5);
+}
+
 export function useFlights() {
-  const [googleFlights, setGoogleFlights] = useState(null);
-  const [skyFlights, setSkyFlights] = useState(null);
+  const [googleFlights,  setGoogleFlights]  = useState(null);
+  const [skyFlights,     setSkyFlights]     = useState(null);
+  const [duffelFlights,  setDuffelFlights]  = useState(null);
   const [gLoading, setGLoading] = useState(false);
   const [sLoading, setSLoading] = useState(false);
-  const [gError, setGError] = useState(null);
-  const [sError, setSError] = useState(null);
+  const [dLoading, setDLoading] = useState(false);
+  const [gError,   setGError]   = useState(null);
+  const [sError,   setSError]   = useState(null);
+  const [dError,   setDError]   = useState(null);
 
   const search = useCallback(async (params) => {
     setGoogleFlights(null);
     setSkyFlights(null);
+    setDuffelFlights(null);
     setGError(null);
     setSError(null);
+    setDError(null);
     setGLoading(true);
     setSLoading(true);
+    setDLoading(true);
 
     fetch(`/api/google-flights?${params}`)
       .then(r => r.json().then(d => ({ ok: r.ok, d })))
@@ -73,21 +98,32 @@ export function useFlights() {
         setSkyFlights(d); setSLoading(false);
       })
       .catch(e => { setSError(e.message); setSLoading(false); });
+
+    fetch(`/api/duffel-flights?${params}`)
+      .then(r => r.json().then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) throw new Error(d.error || `HTTP ${d.status}`);
+        setDuffelFlights(d); setDLoading(false);
+      })
+      .catch(e => { setDError(e.message); setDLoading(false); });
   }, []);
 
   const reset = useCallback(() => {
     setGoogleFlights(null);
     setSkyFlights(null);
+    setDuffelFlights(null);
     setGError(null);
     setSError(null);
+    setDError(null);
   }, []);
 
-  const googleList = useMemo(() => parseGoogleFlights(googleFlights), [googleFlights]);
-  const skyList = useMemo(() => parseSkyFlights(skyFlights), [skyFlights]);
+  const googleList = useMemo(() => parseGoogleFlights(googleFlights),  [googleFlights]);
+  const skyList    = useMemo(() => parseSkyFlights(skyFlights),         [skyFlights]);
+  const duffelList = useMemo(() => parseDuffelFlights(duffelFlights),   [duffelFlights]);
 
   const allFlights = useMemo(() =>
-    [...googleList, ...skyList].sort((a, b) => a.price - b.price),
-  [googleList, skyList]);
+    [...googleList, ...skyList, ...duffelList].sort((a, b) => a.price - b.price),
+  [googleList, skyList, duffelList]);
 
   const bestApiPrice = useMemo(() => {
     const prices = allFlights.map(f => f.price).filter(Boolean);
@@ -95,10 +131,10 @@ export function useFlights() {
   }, [allFlights]);
 
   return {
-    googleFlights, skyFlights,
-    gLoading, sLoading,
-    gError, sError,
-    loading: gLoading || sLoading,
+    googleFlights,  skyFlights,  duffelFlights,
+    gLoading,       sLoading,    dLoading,
+    gError,         sError,      dError,
+    loading: gLoading || sLoading || dLoading,
     allFlights, bestApiPrice,
     search, reset,
   };

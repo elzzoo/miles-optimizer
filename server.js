@@ -68,7 +68,8 @@ const generalLimit = rateLimit({
 });
 
 app.use("/api/google-flights", searchLimit);
-app.use("/api/skyscanner", searchLimit);
+app.use("/api/skyscanner",     searchLimit);
+app.use("/api/duffel-flights", searchLimit);
 app.use("/api/", (req, res, next) => {
   if (req.path === "/google-flights" || req.path === "/skyscanner") return next();
   generalLimit(req, res, next);
@@ -88,11 +89,13 @@ app.get("/api/status", (req, res) => {
     version:   "2.0.0",
     env:       process.env.NODE_ENV || "development",
     services: {
-      supabase: !!process.env.SUPABASE_URL,
-      resend:   !!process.env.RESEND_API_KEY,
-      serpapi:  !!process.env.SERPAPI_KEY,
-      rapidapi: !!process.env.RAPIDAPI_KEY,
-      unsplash: !!process.env.UNSPLASH_ACCESS_KEY,
+      supabase:       !!process.env.SUPABASE_URL,
+      resend:         !!process.env.RESEND_API_KEY,
+      serpapi:        !!process.env.SERPAPI_KEY,
+      rapidapi:       !!process.env.RAPIDAPI_KEY,
+      unsplash:       !!process.env.UNSPLASH_ACCESS_KEY,
+      travelpayouts:  !!(process.env.TRAVELPAYOUTS_TOKEN && process.env.TRAVELPAYOUTS_MARKER),
+      duffel:         !!process.env.DUFFEL_API_TOKEN,
     },
     ts: new Date().toISOString(),
   });

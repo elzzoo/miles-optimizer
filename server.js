@@ -22,6 +22,7 @@ import dealsRouter from "./server/routes/deals.js";
 import waitlistRouter from "./server/routes/waitlist.js";
 import stripeRouter from "./server/routes/stripe.js";
 import authRouter from "./server/routes/auth.js";
+import { dbQuotaMiddleware } from "./server/middleware/quota.js";
 
 const app = express();
 app.use(compression());
@@ -129,6 +130,9 @@ app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.json());
 app.use("/api/auth",         authRouter);
+// DB-backed quota for authenticated users (premium bypass + free counter)
+app.use("/api/flights",        dbQuotaMiddleware);
+app.use("/api/google-flights", dbQuotaMiddleware);
 app.use("/api", flightsRouter);
 app.use("/api", affiliationRouter);
 app.use("/api/alerts",        alertsRouter);

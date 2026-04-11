@@ -43,7 +43,7 @@ app.use((req, res, next) => {
     "script-src 'self' 'unsafe-inline'; " +
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "font-src https://fonts.gstatic.com; " +
-    "img-src 'self' data:; " +
+    "img-src 'self' data: https://images.unsplash.com; " +
     "connect-src 'self' https://api.open-meteo.com https://restcountries.com https://open.er-api.com https://api.opentripmap.com https://api.unsplash.com https://images.unsplash.com https://plausible.io;"
   );
   next();

@@ -2,6 +2,14 @@ import Card from "../../design/components/Card";
 import DealScore from "../miles/DealScore";
 import { useAnalytics } from "../../hooks/useAnalytics";
 
+// Generate a search URL for next month (no specific date needed for deals browsing)
+function getSearchUrl(from: string, to: string) {
+  const next = new Date();
+  next.setMonth(next.getMonth() + 1);
+  const depDate = next.toISOString().slice(0, 10);
+  return `/search?origin=${from}&dest=${to}&depDate=${depDate}`;
+}
+
 interface Deal {
   id: string;
   route: { from: string; to: string; label: string };
@@ -77,19 +85,27 @@ export default function DealCard({ deal, rank, blurred = false }: Props) {
           <div className="text-xs text-slate-500 mb-2">miles + {deal.taxesUSD}$</div>
           <div className="text-xs text-slate-400 line-through">{deal.cashPriceUSD}$ cash</div>
 
-          <a
-            href={deal.program.bookingUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => {
-              trackDealClick(deal.program.id, deal.route.label);
-              trackBooking(deal.program.id);
-              fetch(`/api/go?program=${deal.program.id}&from=${deal.route.from}&to=${deal.route.to}`).catch(() => {});
-            }}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
-          >
-            Réserver ↗
-          </a>
+          <div className="mt-2 flex flex-col items-end gap-1.5">
+            <a
+              href={getSearchUrl(deal.route.from, deal.route.to)}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-primary transition-colors"
+            >
+              🔍 Vérifier le prix
+            </a>
+            <a
+              href={deal.program.bookingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                trackDealClick(deal.program.id, deal.route.label);
+                trackBooking(deal.program.id);
+                fetch(`/api/go?program=${deal.program.id}&from=${deal.route.from}&to=${deal.route.to}`).catch(() => {});
+              }}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-blue-700 transition-colors"
+            >
+              Réserver ↗
+            </a>
+          </div>
         </div>
       </div>
     </Card>

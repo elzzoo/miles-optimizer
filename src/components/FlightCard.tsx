@@ -8,9 +8,10 @@ interface FlightCardProps {
   onSelect: (idx: number | null) => void;
   rates: ExchangeRates | null;
   currency: Currency;
+  onAlert?: () => void;
 }
 
-export default function FlightCard({ flight, idx, selectedIdx, onSelect, rates, currency }: FlightCardProps) {
+export default function FlightCard({ flight, idx, selectedIdx, onSelect, rates, currency, onAlert }: FlightCardProps) {
   const isSelected = selectedIdx === idx;
   const depTime = flight.depTime ? String(flight.depTime).slice(11, 16) : null;
   const priceDisplay = formatAmount(convert(flight.price, currency || "USD", rates), currency || "USD");
@@ -54,10 +55,19 @@ export default function FlightCard({ flight, idx, selectedIdx, onSelect, rates, 
             {depTime && <span className="text-slate-400">{depTime}</span>}
           </div>
         </div>
-        <div className="text-right flex-shrink-0">
+        <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
           <div className="text-2xl font-black text-slate-900 tabular-nums">{priceDisplay}</div>
-          <div className="text-xs text-slate-400 mt-0.5">{priceSecondary}</div>
-          {isSelected && <div className="text-xs text-primary font-semibold mt-1">Sélectionné ✓</div>}
+          <div className="text-xs text-slate-400">{priceSecondary}</div>
+          {isSelected && <div className="text-xs text-primary font-semibold">Sélectionné ✓</div>}
+          {onAlert && (
+            <button
+              onClick={e => { e.stopPropagation(); onAlert(); }}
+              title="Créer une alerte prix"
+              className="text-slate-400 hover:text-primary transition-colors text-base leading-none mt-0.5"
+            >
+              🔔
+            </button>
+          )}
         </div>
       </div>
     </div>

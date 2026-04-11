@@ -19,6 +19,7 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useSearchQuota } from "../hooks/useSearchQuota";
 import { saveRecentSearch } from "../hooks/useRecentSearches";
 import PaywallBanner from "../components/search/PaywallBanner";
+import AlertModal from "../components/AlertModal";
 
 function Spinner() {
   return (
@@ -88,6 +89,7 @@ export default function Search() {
 
   const [searched,     setSearched]     = useState(false);
   const [selectedIdx,  setSelectedIdx]  = useState<number | null>(null);
+  const [alertModalOpen, setAlertModalOpen] = useState(false);
   const quota = useSearchQuota();
 
   // Redirect to home if no destination
@@ -129,6 +131,11 @@ export default function Search() {
   const isReal      = !!bestApiPrice;
 
   const allFailed = !loading && searched && allFlights.length === 0 && !!error;
+
+  const allMilesScores = cashUSD > 0 ? milesResults.slice(0, 8).map(({ program, result }) =>
+    scoreDeal({ program, milesNeeded: result?.milesUsed ?? 0, taxesUSD: program.taxUSD, cashPriceUSD: cashUSD })
+  ) : [];
+  const allFaible = allMilesScores.length > 0 && allMilesScores.every(s => s.centsPerMile < 1.2);
   const sourceLabel = source ? (SOURCE_LABEL[source] || source) : null;
 
   if (!rawDest) return null; // redirecting
@@ -144,7 +151,7 @@ export default function Search() {
       {/* Compact search bar */}
       <div className="bg-white border-b border-slate-100 py-4 px-4">
         <div className="max-w-3xl mx-auto">
-          <SearchForm onSearch={handleSearch} variant="compact" defaultOrigin={urlOrigin} defaultDest={urlDest} defaultDepDate={urlDep} defaultRetDate={urlRet || undefined} />
+          <SearchForm key={urlDep + urlRet} onSearch={handleSearch} variant="compact" defaultOrigin={urlOrigin} defaultDest={urlDest} defaultDepDate={urlDep} defaultRetDate={urlRet || undefined} />
         </div>
       </div>
 
@@ -191,6 +198,14 @@ export default function Search() {
                     {filteredFlights.length} vol{filteredFlights.length > 1 ? "s" : ""} trouvé{filteredFlights.length > 1 ? "s" : ""}
                   </span>
                 )}
+              </div>
+            )}
+
+            {/* Cash-advantageous banner */}
+            {allFaible && !loading && searched && (
+              <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm text-amber-800 flex items-start gap-2">
+                <span className="flex-shrink-0">💡</span>
+                <p>Sur cette route, <strong>payer en cash est plus avantageux</strong> que d'utiliser vos miles — tous les programmes affichent moins de 1,2¢/mile.</p>
               </div>
             )}
 
@@ -250,6 +265,7 @@ export default function Search() {
                   onSelect={setSelectedIdx}
                   rates={rates}
                   currency={currency}
+                  onAlert={() => setAlertModalOpen(true)}
                 />
               ))}
             </div>
@@ -357,6 +373,14 @@ export default function Search() {
           </div>
         </div>
       </div>
+
+      {alertModalOpen && (
+        <AlertModal
+          origin={urlOrigin}
+          dest={urlDest}
+          onClose={() => setAlertModalOpen(false)}
+        />
+      )}
     </>
   );
 }

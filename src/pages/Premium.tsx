@@ -38,30 +38,54 @@ const FAQ = [
 
 export default function Premium() {
   const { trackUpgradeClick } = useAnalytics();
-  const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlisted, setWaitlisted]       = useState(false);
-  const [submitting, setSubmitting]       = useState(false);
   const [open, setOpen]                   = useState<number | null>(null);
   const [billing, setBilling]             = useState<"annual" | "monthly">("annual");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError]     = useState("");
+  const [showWaitlist, setShowWaitlist]        = useState(false);
+  const [waitlistEmail, setWaitlistEmail]      = useState("");
+  const [waitlisted, setWaitlisted]            = useState(false);
+  const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
 
   const price    = billing === "annual" ? "6,58€" : "9,90€";
   const period   = billing === "annual" ? "/mois · facturé 79€/an" : "/mois";
   const savings  = billing === "annual" ? "Économisez 40%" : null;
 
+  async function handleCheckout() {
+    trackUpgradeClick();
+    setCheckoutLoading(true);
+    setCheckoutError("");
+    try {
+      const res = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ billing }),
+      });
+      if (res.status === 503) { setShowWaitlist(true); setCheckoutLoading(false); return; }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Erreur lors de la création du paiement");
+      }
+      const { url } = await res.json();
+      window.location.href = url;
+    } catch (e: any) {
+      setCheckoutError(e.message);
+      setCheckoutLoading(false);
+    }
+  }
+
   async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
-    trackUpgradeClick();
-    setSubmitting(true);
+    setWaitlistSubmitting(true);
     try {
       await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: waitlistEmail, billing }),
       });
-    } catch {
-      // best-effort; still show success
-    } finally {
-      setSubmitting(false);
+    } catch { /* best-effort */ }
+    finally {
+      setWaitlistSubmitting(false);
       setWaitlisted(true);
     }
   }
@@ -183,13 +207,18 @@ export default function Premium() {
               ))}
             </ul>
 
-            <a
-              href="#waitlist"
-              onClick={trackUpgradeClick}
-              className="block w-full text-center py-3.5 rounded-xl font-bold text-sm bg-primary text-white hover:bg-[#1D4ED8] shadow-sm transition-all"
+            <button
+              onClick={handleCheckout}
+              disabled={checkoutLoading}
+              className="w-full py-3.5 rounded-xl font-bold text-sm bg-primary text-white hover:bg-[#1D4ED8] shadow-sm transition-all disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              Rejoindre la liste d'attente →
-            </a>
+              {checkoutLoading ? (
+                <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Chargement…</>
+              ) : "S'abonner →"}
+            </button>
+            {checkoutError && (
+              <p className="text-xs text-red-600 text-center mt-2">{checkoutError}</p>
+            )}
           </div>
         </div>
 
@@ -218,36 +247,46 @@ export default function Premium() {
           <p className="text-[10px] text-slate-400 text-center mt-3">Témoignages à titre illustratif — données réelles à venir</p>
         </div>
 
-        {/* Waitlist */}
-        <div id="waitlist" className="bg-slate-50 rounded-3xl p-8 mb-14 text-center">
-          <h3 className="font-bold text-slate-900 mb-2">🚀 Paiement bientôt disponible</h3>
-          <p className="text-slate-500 text-sm mb-6">Laissez votre email pour être notifié en premier et recevoir -20% de réduction au lancement.</p>
+        {/* Waitlist (fallback when Stripe not configured) */}
+        {showWaitlist && (
+          <div id="waitlist" className="bg-slate-50 rounded-3xl p-8 mb-14 text-center">
+            <h3 className="font-bold text-slate-900 mb-2">🚀 Paiement bientôt disponible</h3>
+            <p className="text-slate-500 text-sm mb-6">Laissez votre email pour être notifié en premier et recevoir -20% de réduction au lancement.</p>
+            {waitlisted ? (
+              <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
+                <p className="text-green-700 font-semibold">✓ Vous êtes sur la liste d'attente !</p>
+                <p className="text-green-600 text-sm mt-1">On vous contacte dès le lancement.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlist} className="flex gap-3 max-w-sm mx-auto">
+                <input
+                  type="email"
+                  value={waitlistEmail}
+                  onChange={e => setWaitlistEmail(e.target.value)}
+                  placeholder="vous@email.com"
+                  required
+                  className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <button
+                  type="submit"
+                  disabled={waitlistSubmitting}
+                  className="bg-primary text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1D4ED8] transition-colors text-sm disabled:opacity-60"
+                >
+                  {waitlistSubmitting ? "..." : "M'inscrire"}
+                </button>
+              </form>
+            )}
+          </div>
+        )}
 
-          {waitlisted ? (
-            <div className="bg-green-50 border border-green-200 rounded-2xl p-5">
-              <p className="text-green-700 font-semibold">✓ Vous êtes sur la liste d'attente !</p>
-              <p className="text-green-600 text-sm mt-1">On vous contacte dès le lancement.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleWaitlist} className="flex gap-3 max-w-sm mx-auto">
-              <input
-                type="email"
-                value={waitlistEmail}
-                onChange={e => setWaitlistEmail(e.target.value)}
-                placeholder="vous@email.com"
-                required
-                className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              <button
-                type="submit"
-                disabled={submitting}
-                className="bg-primary text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1D4ED8] transition-colors text-sm disabled:opacity-60"
-              >
-                {submitting ? "..." : "M'inscrire"}
-              </button>
-            </form>
-          )}
-        </div>
+        {/* Trust badges (shown when Stripe is active) */}
+        {!showWaitlist && (
+          <div className="mb-14 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5"><span className="text-green-500">🔒</span> Paiement sécurisé Stripe</span>
+            <span className="flex items-center gap-1.5"><span>↩️</span> Annulation à tout moment</span>
+            <span className="flex items-center gap-1.5"><span>📧</span> Support prioritaire</span>
+          </div>
+        )}
 
         {/* FAQ */}
         <div>

@@ -11,16 +11,23 @@ export default function Alerts() {
   const { alerts, loading, createAlert, deleteAlert, toggleAlert } = useAlerts(token);
   const prefillOrigin = searchParams.get("origin") || undefined;
   const prefillDest   = searchParams.get("dest")   || undefined;
-  const [email, setEmail]   = useState("");
-  const [sent, setSent]     = useState(false);
+  const [email, setEmail]     = useState("");
+  const [sent, setSent]       = useState(false);
   const [sending, setSending] = useState(false);
+  const [signInError, setSignInError] = useState("");
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setSending(true);
+    setSignInError("");
     const { error } = await signIn(email);
     setSending(false);
-    if (!error) setSent(true);
+    if (error) {
+      setSignInError(error.message || "Une erreur est survenue. Réessayez.");
+    } else {
+      setEmail("");
+      setSent(true);
+    }
   }
 
   if (!user) {
@@ -56,10 +63,17 @@ export default function Alerts() {
               <button
                 type="submit"
                 disabled={sending}
-                className="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors"
+                className="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
-                {sending ? "Envoi..." : "Recevoir le lien de connexion →"}
+                {sending ? (
+                  <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Envoi en cours…</>
+                ) : "Recevoir le lien de connexion →"}
               </button>
+              {signInError && (
+                <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
+                  ❌ {signInError}
+                </div>
+              )}
               <p className="text-xs text-slate-400 mt-3">Sans mot de passe · Lien valable 1h</p>
             </form>
           )}

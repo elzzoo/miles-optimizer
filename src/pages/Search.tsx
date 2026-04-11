@@ -133,7 +133,7 @@ const { isPremium } = useAuth();
       reset();
       search(p);
       setSearched(true);
-      quota.increment();
+              if (!isPremium) quota.increment();
       trackSearch(urlOrigin, urlDest, urlCabin);
       saveRecentSearch(p);
     }
@@ -141,13 +141,13 @@ const { isPremium } = useAuth();
   }, []);
 
   const handleSearch = useCallback((params: URLSearchParams) => {
-    if (quota.exhausted) return;
+        if (!isPremium && quota.exhausted) return;
     navigate(`/search?${params.toString()}`);
     reset();
     search(params);
     setSearched(true);
     setSelectedIdx(null);
-    quota.increment();
+        if (!isPremium) quota.increment();
   }, [navigate, search, reset, quota.exhausted]);
 
   const [estEco, estBus] = estimateCash(distMiles, !urlRet);
@@ -236,7 +236,7 @@ const { isPremium } = useAuth();
             )}
 
             {/* Freemium quota */}
-            <PaywallBanner remaining={quota.remaining} limit={quota.limit} />
+{!isPremium && <PaywallBanner remaining={quota.remaining} limit={quota.limit} />}
 
             {/* Loading skeletons */}
             {!quota.exhausted && loading && <Skeleton variant="card" count={3} />}

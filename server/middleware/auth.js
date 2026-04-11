@@ -1,43 +1,33 @@
-import { supabaseAdmin, isSupabaseConfigured } from "../services/supabase.js";
+import crypto from "node:crypto";
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString("hex");
 
 /**
- * JWT middleware — verifies Supabase auth token
- * Attaches req.user on success
+ * JWT middleware — verifies custom JWT token (issued by /api/auth/verify)
+ * Attaches req.user = { sub, email, plan } on success
  */
-export async function authMiddleware(req, res, next) {
-  if (!isSupabaseConfigured) {
-    return res.status(503).json({ error: "Auth not configured" });
-  }
-
+export function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing authorization header" });
+    return res.status(401).json({ error: "Non autorisé" });
   }
-
-  const token = header.slice(7);
   try {
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-    if (error || !user) return res.status(401).json({ error: "Invalid or expired token" });
-    req.user = user;
+    req.user = jwt.verify(header.slice(7), JWT_SECRET);
     next();
-  } catch (err) {
-    return res.status(401).json({ error: "Auth error" });
+  } catch {
+    return res.status(401).json({ error: "Token invalide ou expiré" });
   }
 }
 
 /**
- * Optional auth — doesn't fail if not authenticated, just sets req.user = null
+ * Optional auth — sets req.user = null if no valid token, otherwise attaches payload
  */
-export async function optionalAuthMiddleware(req, res, next) {
+export function optionalAuthMiddleware(req, res, next) {
   const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ") || !isSupabaseConfigured) {
-    req.user = null;
-    return next();
+  req.user = null;
+  if (header?.startsWith("Bearer ")) {
+    try { req.user = jwt.verify(header.slice(7), JWT_SECRET); } catch {}
   }
-  const token = header.slice(7);
-  try {
-    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-    req.user = user ?? null;
-  } catch { req.user = null; }
   next();
 }

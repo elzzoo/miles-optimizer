@@ -20,11 +20,11 @@ type Cabin    = 0 | 1;
 export default function SearchForm({ onSearch, variant = "hero", defaultOrigin = "DSS", defaultDest = "", defaultDepDate, defaultRetDate, onOriginChange }: Props) {
   const [origin, setOrigin]       = useState(defaultOrigin);
   const [dest, setDest]           = useState(defaultDest);
-  const [tripType, setTripType]   = useState<TripType>(defaultRetDate ? "round" : "oneway");
+  const [tripType, setTripType]   = useState<TripType>(defaultRetDate ? "round" : variant === "hero" ? "round" : "oneway");
   const [cabin, setCabin]         = useState<Cabin>(0);
   const [passengers, setPassengers] = useState(1);
   const [depDate, setDepDate]     = useState(() => defaultDepDate || addDays(today, 30));
-  const [retDate, setRetDate]     = useState(() => defaultRetDate || addDays(today, 40));
+  const [retDate, setRetDate]     = useState(() => defaultRetDate || addDays(today, 37));
   const [lang] = useState("fr");
 
   const { trackSearch } = useAnalytics();
@@ -151,12 +151,18 @@ export default function SearchForm({ onSearch, variant = "hero", defaultOrigin =
           value={depDate}
           min={addDays(today, 0)}
           onChange={v => { setDepDate(v); }}
-          quickOptions={[
-            { label: "2 sem", value: addDays(today, 14) },
-            { label: "1 mois", value: addDays(today, 30) },
-            { label: "2 mois", value: addDays(today, 60) },
-            { label: "3 mois", value: addDays(today, 90) },
-          ]}
+          quickOptions={(() => {
+            const d = new Date(today + "T12:00:00");
+            const dayOfWeek = d.getDay(); // 0=Sun, 6=Sat
+            const daysToFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 6; // next Friday
+            const nextFriday = addDays(today, daysToFriday === 0 ? 7 : daysToFriday);
+            return [
+              { label: "Ce week-end", value: nextFriday },
+              { label: "1 mois", value: addDays(today, 30) },
+              { label: "2 mois", value: addDays(today, 60) },
+              { label: "3 mois", value: addDays(today, 90) },
+            ];
+          })()}
         />
         {!isOneWay && (
           <DatePicker
@@ -165,9 +171,9 @@ export default function SearchForm({ onSearch, variant = "hero", defaultOrigin =
             min={addDays(depDate, 1)}
             onChange={setRetDate}
             quickOptions={[
-              { label: "3j",   value: addDays(new Date(depDate + "T12:00:00"), 3)  },
-              { label: "1 sem", value: addDays(new Date(depDate + "T12:00:00"), 7)  },
-              { label: "2 sem", value: addDays(new Date(depDate + "T12:00:00"), 14) },
+              { label: "1 sem",  value: addDays(new Date(depDate + "T12:00:00"), 7)  },
+              { label: "2 sem",  value: addDays(new Date(depDate + "T12:00:00"), 14) },
+              { label: "1 mois", value: addDays(new Date(depDate + "T12:00:00"), 30) },
             ]}
           />
         )}

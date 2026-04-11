@@ -88,6 +88,34 @@ app.get("/api/status", (req, res) => {
   });
 });
 
+// Origin/referer check for /api/flights
+const ALLOWED_ORIGINS_FLIGHTS = [
+  process.env.APP_URL,
+  'https://miles-optimizer-next-3y3m.onrender.com',
+  'https://miles-optimizer-eight.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
+
+app.use('/api/flights', (req, res, next) => {
+  const origin = req.headers.origin || req.headers.referer || '';
+  const ok = !origin || ALLOWED_ORIGINS_FLIGHTS.some(o => origin.startsWith(o));
+  if (!ok && process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Accès non autorisé' });
+  }
+  next();
+});
+
+const flightsQuotaLimit = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24h
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Quota atteint. Passez Premium pour des recherches illimitées.' },
+  skip: (req) => process.env.NODE_ENV !== 'production', // only in prod
+});
+app.use('/api/flights', flightsQuotaLimit);
+
 app.use("/api/flights",        searchLimit);
 app.use("/api/google-flights", searchLimit);
 app.use("/api/", (req, res, next) => {

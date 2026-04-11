@@ -1,6 +1,5 @@
 import { Helmet } from "react-helmet-async";
 import { useState } from "react";
-import { useAnalytics } from "../hooks/useAnalytics";
 
 const TESTIMONIALS = [
   {
@@ -37,11 +36,8 @@ const FAQ = [
 ];
 
 export default function Premium() {
-  const { trackUpgradeClick } = useAnalytics();
   const [open, setOpen]                   = useState<number | null>(null);
   const [billing, setBilling]             = useState<"annual" | "monthly">("annual");
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutError, setCheckoutError]     = useState("");
   const [showWaitlist, setShowWaitlist]        = useState(false);
   const [waitlistEmail, setWaitlistEmail]      = useState("");
   const [waitlisted, setWaitlisted]            = useState(false);
@@ -50,29 +46,6 @@ export default function Premium() {
   const price    = billing === "annual" ? "6,58€" : "9,90€";
   const period   = billing === "annual" ? "/mois · facturé 79€/an" : "/mois";
   const savings  = billing === "annual" ? "Économisez 40%" : null;
-
-  async function handleCheckout() {
-    trackUpgradeClick();
-    setCheckoutLoading(true);
-    setCheckoutError("");
-    try {
-      const res = await fetch("/api/stripe/create-checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ billing }),
-      });
-      if (res.status === 503) { setShowWaitlist(true); setCheckoutLoading(false); return; }
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Erreur lors de la création du paiement");
-      }
-      const { url } = await res.json();
-      window.location.href = url;
-    } catch (e: any) {
-      setCheckoutError(e.message);
-      setCheckoutLoading(false);
-    }
-  }
 
   async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
@@ -207,18 +180,12 @@ export default function Premium() {
               ))}
             </ul>
 
-            <button
-              onClick={handleCheckout}
-              disabled={checkoutLoading}
-              className="w-full py-3.5 rounded-xl font-bold text-sm bg-primary text-white hover:bg-[#1D4ED8] shadow-sm transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-            >
-              {checkoutLoading ? (
-                <><svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Chargement…</>
-              ) : "S'abonner →"}
-            </button>
-            {checkoutError && (
-              <p className="text-xs text-red-600 text-center mt-2">{checkoutError}</p>
-            )}
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+              <p className="text-sm font-semibold text-slate-800 mb-1">💳 Paiement bientôt disponible</p>
+              <a href="/alerts" className="text-sm text-primary font-medium hover:underline">
+                Inscris-toi pour être notifié →
+              </a>
+            </div>
           </div>
         </div>
 
@@ -276,15 +243,6 @@ export default function Premium() {
                 </button>
               </form>
             )}
-          </div>
-        )}
-
-        {/* Trust badges (shown when Stripe is active) */}
-        {!showWaitlist && (
-          <div className="mb-14 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5"><span className="text-green-500">🔒</span> Paiement sécurisé Stripe</span>
-            <span className="flex items-center gap-1.5"><span>↩️</span> Annulation à tout moment</span>
-            <span className="flex items-center gap-1.5"><span>📧</span> Support prioritaire</span>
           </div>
         )}
 

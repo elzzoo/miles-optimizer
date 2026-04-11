@@ -50,7 +50,16 @@ export default function Header() {
         {/* Right actions */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => navigate("/search")}
+            onClick={() => {
+              if (window.location.pathname !== "/") {
+                navigate("/");
+              }
+              // Scroll to top where search form is and focus first text input
+              setTimeout(() => {
+                const input = document.querySelector('input[placeholder*="Paris"]') || document.querySelector('input[placeholder*="CDG"]') || document.querySelector('input[type="text"]');
+                if (input) (input as HTMLInputElement).focus();
+              }, 100);
+            }}
             className="hidden md:flex items-center gap-1.5 text-sm text-slate-600 hover:text-slate-900 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">

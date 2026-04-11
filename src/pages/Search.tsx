@@ -30,6 +30,30 @@ function Spinner() {
   );
 }
 
+function buildProgramUrl(programId: string, origin: string, dest: string, depDate: string): string {
+  const baseUrls: Record<string, string | ((o: string, d: string, date: string) => string)> = {
+    aeroplan:    (o, d, dt) => `https://www.aircanada.com/aeroplan/redeem/availability/outbound?org0=${o}&dest0=${d}&departureDate=${dt}&lang=fr-CA&tripType=O&marketCode=INT`,
+    flyingblue:  (o, d, dt) => `https://wwws.airfrance.fr/recherche/vols?origin=${o}&destination=${d}&outwardDate=${dt}&cabinClass=ECONOMY&passengerCount=1&tripType=ONE_WAY`,
+    lifemiles:   (o, d, dt) => `https://www.lifemiles.com/miles/redeem/search?origin=${o}&destination=${d}&departureDate=${dt}&adults=1&cabin=Y`,
+    ba:          (o, d) => `https://www.britishairways.com/en-gb/flights/offers/avios-flights?departurePoint=${o}&destinationPoint=${d}`,
+    aadvantage:  (o, d, dt) => `https://www.aa.com/booking/search?locale=fr_FR&pax=1&adult=1&type=OneWay&searchType=Award&carriers=ALL&fromStation=${o}&toStation=${d}&departDate=${dt}`,
+    united:      (o, d, dt) => `https://www.united.com/en/us/book-flight/united-awards/search?f=${o}&t=${d}&d=${dt}&tt=1&sc=7&px=1&taxng=1&newHP=True`,
+    turkish:     "https://www.turkishairlines.com/fr-fr/miles-smiles/utiliser-vos-miles/vols-miles/",
+    fidelys:     "https://fidelys.tunisair.com/en/use-miles",
+    sindbad:     "https://www.royalairmaroc.com/fr-fr/fidelite/sindbad/utiliser-mes-miles",
+    asantemiles: "https://www.kenya-airways.com/fr/flying-blue/utiliser-mes-miles/",
+    safarflyer:  "https://www.airalgerie.dz/fr/safar-flyer",
+    aegean:      "https://en.aegeanair.com/miles-bonus/use-miles/award-flights/",
+    shebamiles:  "https://www.ethiopianairlines.com/fr/shebamiles/use-miles",
+    qatar:       "https://www.qatarairways.com/en/privilege-club/avios.html",
+    krisflyer:   "https://www.singaporeair.com/en_UK/us/krisflyer/redeem/award-redemption/",
+  };
+  const fn = baseUrls[programId];
+  if (!fn) return "#";
+  if (typeof fn === "function") return fn(origin, dest, depDate);
+  return fn;
+}
+
 function buildGoogleFlightsUrl(origin: string, dest: string, depDate: string, retDate?: string, cabin?: number) {
   const dep = depDate.replace(/-/g, "").slice(2);
   const ret = retDate ? retDate.replace(/-/g, "").slice(2) : null;
@@ -339,7 +363,7 @@ export default function Search() {
                           </>
                         )}
                         <a
-                          href={program.bookingUrl}
+                          href={buildProgramUrl(program.id, urlOrigin, urlDest, urlDep)}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => {

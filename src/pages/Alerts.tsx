@@ -7,7 +7,7 @@ import AlertForm from "../components/alerts/AlertForm";
 
 export default function Alerts() {
   const [searchParams] = useSearchParams();
-  const { user, isPremium, signIn, token } = useAuth();
+  const { user, isPremium, token } = useAuth();
   const { alerts, loading, createAlert, deleteAlert, toggleAlert } = useAlerts(token);
   const prefillOrigin = searchParams.get("origin") || undefined;
   const prefillDest   = searchParams.get("dest")   || undefined;
@@ -20,13 +20,20 @@ export default function Alerts() {
     e.preventDefault();
     setSending(true);
     setSignInError("");
-    const { error } = await signIn(email);
-    setSending(false);
-    if (error) {
-      setSignInError(error.message || "Une erreur est survenue. Réessayez.");
-    } else {
+    try {
+      const res = await fetch("/api/waitlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "alerts" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
       setEmail("");
       setSent(true);
+    } catch (e: any) {
+      setSignInError(e.message || "Une erreur est survenue. Réessayez.");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -44,8 +51,8 @@ export default function Alerts() {
           {sent ? (
             <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
               <div className="text-3xl mb-3">✉️</div>
-              <h3 className="font-bold text-green-800 mb-2">Email envoyé !</h3>
-              <p className="text-green-700 text-sm">Vérifiez votre boîte mail et cliquez sur le lien de connexion.</p>
+              <h3 className="font-bold text-green-800 mb-2">Inscription enregistrée !</h3>
+              <p className="text-green-700 text-sm">Tu seras alerté(e) dès qu'un deal correspond à ta route.</p>
             </div>
           ) : (
             <form onSubmit={handleSignIn} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
@@ -77,6 +84,42 @@ export default function Alerts() {
               <p className="text-xs text-slate-400 mt-3">Sans mot de passe · Lien valable 1h</p>
             </form>
           )}
+        </div>
+
+        {/* Comment ça marche */}
+        <div className="mt-10">
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Comment ça marche</h2>
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
+            {[
+              { step: "1", icon: "🗺️", title: "Indique ta route", desc: "Choisis ton aéroport de départ et ta destination, et fixe un plafond de miles." },
+              { step: "2", icon: "👀", title: "On surveille les prix", desc: "Notre algorithme scanne les programmes miles chaque jour pour détecter les bons deals." },
+              { step: "3", icon: "📧", title: "Tu reçois une alerte", desc: "Dès qu'un deal passe sous ton seuil, tu reçois un email avec le lien de réservation." },
+            ].map(({ step, icon, title, desc }) => (
+              <div key={step} className="bg-white rounded-2xl border border-slate-100 p-5 text-center">
+                <div className="text-3xl mb-3">{icon}</div>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Étape {step}</p>
+                <h3 className="font-semibold text-slate-800 mb-2">{title}</h3>
+                <p className="text-sm text-slate-500">{desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">Exemples d'alertes populaires</h3>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              { route: "DSS → CDG", program: "Flying Blue", threshold: "35 000 miles", flag: "🇫🇷" },
+              { route: "DSS → JFK", program: "Aeroplan",    threshold: "70 000 miles", flag: "🇺🇸" },
+              { route: "DSS → DXB", program: "Fidelys",     threshold: "30 000 miles", flag: "🇦🇪" },
+            ].map(({ route, program, threshold, flag }) => (
+              <div key={route} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{flag}</span>
+                  <span className="font-mono font-bold text-slate-800 text-sm">{route}</span>
+                </div>
+                <p className="text-xs text-slate-500">{program} · sous {threshold}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </>
     );
@@ -169,6 +212,42 @@ export default function Alerts() {
               defaultOrigin={prefillOrigin}
               defaultDest={prefillDest}
             />
+          </div>
+        </div>
+
+        {/* Comment ça marche */}
+        <div className="mt-10">
+          <h2 className="text-xl font-bold text-slate-900 mb-6">Comment ça marche</h2>
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
+            {[
+              { step: "1", icon: "🗺️", title: "Indique ta route", desc: "Choisis ton aéroport de départ et ta destination, et fixe un plafond de miles." },
+              { step: "2", icon: "👀", title: "On surveille les prix", desc: "Notre algorithme scanne les programmes miles chaque jour pour détecter les bons deals." },
+              { step: "3", icon: "📧", title: "Tu reçois une alerte", desc: "Dès qu'un deal passe sous ton seuil, tu reçois un email avec le lien de réservation." },
+            ].map(({ step, icon, title, desc }) => (
+              <div key={step} className="bg-white rounded-2xl border border-slate-100 p-5 text-center">
+                <div className="text-3xl mb-3">{icon}</div>
+                <p className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Étape {step}</p>
+                <h3 className="font-semibold text-slate-800 mb-2">{title}</h3>
+                <p className="text-sm text-slate-500">{desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">Exemples d'alertes populaires</h3>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {[
+              { route: "DSS → CDG", program: "Flying Blue", threshold: "35 000 miles", flag: "🇫🇷" },
+              { route: "DSS → JFK", program: "Aeroplan",    threshold: "70 000 miles", flag: "🇺🇸" },
+              { route: "DSS → DXB", program: "Fidelys",     threshold: "30 000 miles", flag: "🇦🇪" },
+            ].map(({ route, program, threshold, flag }) => (
+              <div key={route} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">{flag}</span>
+                  <span className="font-mono font-bold text-slate-800 text-sm">{route}</span>
+                </div>
+                <p className="text-xs text-slate-500">{program} · sous {threshold}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -20,6 +20,36 @@ try {
 const clickLog = [];
 const MAX_LOG = 1000;
 
+function buildDynamicUrl(programId, origin, dest, depDate) {
+  const o = (origin || "").toUpperCase();
+  const d = (dest || "").toUpperCase();
+  // Format YYMMDD for Aviasales
+  const aviasalesDate = depDate ? (() => {
+    const dt = new Date(depDate + "T12:00:00");
+    const yy = String(dt.getFullYear()).slice(2);
+    const mm = String(dt.getMonth() + 1).padStart(2, "0");
+    const dd = String(dt.getDate()).padStart(2, "0");
+    return yy + mm + dd;
+  })() : "";
+
+  const map = {
+    aeroplan:    o && d && depDate ? `https://www.aircanada.com/aeroplan/redeem/availability/outbound?org0=${o}&dest0=${d}&departureDate=${depDate}&lang=fr-CA&tripType=O&marketCode=INT` : null,
+    flyingblue:  o && d && depDate ? `https://wwws.airfrance.fr/recherche/vols?origin=${o}&destination=${d}&outwardDate=${depDate}&cabinClass=ECONOMY&passengerCount=1&tripType=ONE_WAY` : null,
+    lifemiles:   o && d && depDate ? `https://www.lifemiles.com/miles/redeem/search?origin=${o}&destination=${d}&departureDate=${depDate}&adults=1&cabin=Y` : null,
+    ba:          o && d ? `https://www.britishairways.com/en-gb/flights/offers/avios-flights?departurePoint=${o}&destinationPoint=${d}` : null,
+    aadvantage:  o && d && depDate ? `https://www.aa.com/booking/search?locale=fr_FR&pax=1&adult=1&type=OneWay&searchType=Award&carriers=ALL&fromStation=${o}&toStation=${d}&departDate=${depDate}` : null,
+    united:      o && d && depDate ? `https://www.united.com/en/us/book-flight/united-awards/search?f=${o}&t=${d}&d=${depDate}&tt=1&sc=7&px=1&taxng=1&newHP=True` : null,
+    turkish:     "https://www.turkishairlines.com/fr-fr/miles-smiles/utiliser-vos-miles/vols-miles/",
+    fidelys:     "https://fidelys.tunisair.com/en/use-miles",
+    sindbad:     "https://www.royalairmaroc.com/fr-fr/fidelite/sindbad/utiliser-mes-miles",
+    asantemiles: "https://www.kenya-airways.com/fr/flying-blue/utiliser-mes-miles/",
+    safarflyer:  "https://www.airalgerie.dz/fr/safar-flyer",
+    aegean:      "https://en.aegeanair.com/miles-bonus/use-miles/award-flights/",
+    shebamiles:  "https://www.ethiopianairlines.com/fr/shebamiles/use-miles",
+  };
+  return map[programId] || null;
+}
+
 router.get("/go", (req, res) => {
   const { program, origin, dest, cabin, ref } = req.query;
 
@@ -48,7 +78,8 @@ router.get("/go", (req, res) => {
 
   // For direct navigation (fallback), redirect to booking URL
   const affiliateUrl = affiliateLinks[program];
-  const candidate = (affiliateUrl && affiliateUrl.startsWith("https://")) ? affiliateUrl : BOOKING_URLS[program];
+  const dynamicUrl = buildDynamicUrl(program, origin, dest, req.query.depDate);
+  const candidate = dynamicUrl || (affiliateUrl && affiliateUrl.startsWith("https://")) ? (dynamicUrl || affiliateUrl) : BOOKING_URLS[program];
   if (!candidate || !candidate.startsWith("https://")) {
     return res.status(500).json({ error: "No valid redirect URL for program" });
   }

@@ -191,7 +191,7 @@ export default function Calculator() {
                 </div>
                 <div className="flex justify-between font-semibold text-slate-700 pt-1 border-t border-slate-100">
                   <span>Coût total miles</span>
-                  <span>{score.totalMilesCost}$</span>
+                  <span>{score.totalMilesCost ?? 0}$</span>
                 </div>
               </div>
             </Card>

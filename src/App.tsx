@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { lazy, Suspense } from "react";
 import PageLayout from "./design/layouts/PageLayout";
@@ -48,6 +48,11 @@ export default function App() {
               element={<Suspense fallback={<PageLoader />}><MentionsLegales /></Suspense>} />
             <Route path="/confidentialite"
               element={<Suspense fallback={<PageLoader />}><Confidentialite /></Suspense>} />
+            {/* /guides/* redirects */}
+            <Route path="/guides/flying-blue"  element={<Navigate to="/flying-blue-guide"       replace />} />
+            <Route path="/guides/aeroplan"     element={<Navigate to="/flying-aeroplan-guide"   replace />} />
+            <Route path="/guides/lifemiles"    element={<Navigate to="/flying-lifemiles-guide"  replace />} />
+            <Route path="/guides/miles-smiles" element={<Navigate to="/flying-turkish-guide"    replace />} />
             {/* SEO routes dynamiques — catch-all en dernier */}
             <Route path="/:slug"
               element={<Suspense fallback={<PageLoader />}><RouteGuide /></Suspense>} />

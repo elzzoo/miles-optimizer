@@ -20,7 +20,7 @@ type Cabin    = 0 | 1;
 export default function SearchForm({ onSearch, variant = "hero", defaultOrigin = "DSS", defaultDest = "", defaultDepDate, defaultRetDate, onOriginChange }: Props) {
   const [origin, setOrigin]       = useState(defaultOrigin);
   const [dest, setDest]           = useState(defaultDest);
-  const [tripType, setTripType]   = useState<TripType>(defaultRetDate ? "round" : "round");
+  const [tripType, setTripType]   = useState<TripType>(defaultRetDate ? "round" : "oneway");
   const [cabin, setCabin]         = useState<Cabin>(0);
   const [passengers, setPassengers] = useState(1);
   const [depDate, setDepDate]     = useState(() => defaultDepDate || addDays(today, 30));

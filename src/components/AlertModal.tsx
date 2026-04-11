@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default function AlertModal({ origin, dest, onClose }: Props) {
-  const { user, signIn } = useAuth();
+  const { user } = useAuth();
   const [email, setEmail]     = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent]       = useState(false);
@@ -18,13 +18,20 @@ export default function AlertModal({ origin, dest, onClose }: Props) {
     e.preventDefault();
     setSending(true);
     setError("");
-    const { error: signInErr } = await signIn(email);
-    setSending(false);
-    if (signInErr) {
-      setError(signInErr.message || "Une erreur est survenue. Réessayez.");
-    } else {
+    try {
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
       setEmail("");
       setSent(true);
+    } catch (e: any) {
+      setError(e.message || "Une erreur est survenue");
+    } finally {
+      setSending(false);
     }
   }
 

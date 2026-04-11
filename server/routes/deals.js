@@ -42,69 +42,74 @@ const PROGRAM_MILES = {
 };
 
 router.get("/", cacheMiddleware(12 * 3600), async (req, res) => {
-  const { PROGRAMS } = await import("../data/programs.js");
-  const programMap   = Object.fromEntries(PROGRAMS.map(p => [p.id, p]));
+  try {
+    const { PROGRAMS } = await import("../data/programs.js");
+    const programMap   = Object.fromEntries(PROGRAMS.map(p => [p.id, p]));
 
-  // Pre-fetch Travelpayouts prices in parallel for all unique routes (best-effort, 6h cache)
-  const tpPriceMap = {};
-  if (tpConfigured()) {
-    const uniqueRoutes = [...new Set(TOP_ROUTES.map(r => `${r.from}-${r.to}`))];
-    await Promise.allSettled(
-      uniqueRoutes.map(async (key) => {
-        const [from, to] = key.split("-");
-        const price = await getCheapestPrice(from, to).catch(() => null);
-        tpPriceMap[key] = price;
-      })
-    );
-  }
+    // Pre-fetch Travelpayouts prices in parallel for all unique routes (best-effort, 6h cache)
+    const tpPriceMap = {};
+    if (tpConfigured()) {
+      const uniqueRoutes = [...new Set(TOP_ROUTES.map(r => `${r.from}-${r.to}`))];
+      await Promise.allSettled(
+        uniqueRoutes.map(async (key) => {
+          const [from, to] = key.split("-");
+          const price = await getCheapestPrice(from, to).catch(() => null);
+          tpPriceMap[key] = price;
+        })
+      );
+    }
 
-  const deals = [];
+    const deals = [];
 
-  for (const route of TOP_ROUTES) {
-    const key          = `${route.from}-${route.to}`;
-    const tpPrice      = tpPriceMap[key] ?? null;
-    const cashPriceUSD = tpPrice ?? ROUTE_PRICES[key] ?? 700;
-    const tpUrl        = buildAffiliateLink(route.from, route.to);
+    for (const route of TOP_ROUTES) {
+      const key          = `${route.from}-${route.to}`;
+      const tpPrice      = tpPriceMap[key] ?? null;
+      const cashPriceUSD = tpPrice ?? ROUTE_PRICES[key] ?? 700;
+      const tpUrl        = buildAffiliateLink(route.from, route.to);
 
-    for (const [programId, routeMiles] of Object.entries(PROGRAM_MILES)) {
-      const milesNeeded = routeMiles[key];
-      if (!milesNeeded) continue;
+      for (const [programId, routeMiles] of Object.entries(PROGRAM_MILES)) {
+        const milesNeeded = routeMiles[key];
+        if (!milesNeeded) continue;
 
-      const program = programMap[programId];
-      if (!program) continue;
+        const program = programMap[programId];
+        if (!program) continue;
 
-      const score = scoreDeal({
-        program,
-        milesNeeded,
-        taxesUSD: program.taxUSD ?? 60,
-        cashPriceUSD,
-      });
-
-      if (score.centsPerMile >= 1.0) {
-        deals.push({
-          id:          `${programId}-${key}`,
-          route,
-          program:     { id: program.id, name: program.name, short: program.short, emoji: program.emoji, bookingUrl: program.bookingUrl },
-          cashPriceUSD,
-          tpPrice,          // real Travelpayouts price (null = using estimate)
-          tpUrl,            // Aviasales affiliate link
+        const score = scoreDeal({
+          program,
           milesNeeded,
-          taxesUSD:    program.taxUSD ?? 60,
-          score,
-          updatedAt:   new Date().toISOString(),
+          taxesUSD: program.taxUSD ?? 60,
+          cashPriceUSD,
         });
+
+        if (score.centsPerMile >= 1.0) {
+          deals.push({
+            id:          `${programId}-${key}`,
+            route,
+            program:     { id: program.id, name: program.name, short: program.short, emoji: program.emoji, bookingUrl: program.bookingUrl },
+            cashPriceUSD,
+            tpPrice,          // real Travelpayouts price (null = using estimate)
+            tpUrl,            // Aviasales affiliate link
+            milesNeeded,
+            taxesUSD:    program.taxUSD ?? 60,
+            score,
+            updatedAt:   new Date().toISOString(),
+          });
+        }
       }
     }
+
+    deals.sort((a, b) => b.score.centsPerMile - a.score.centsPerMile);
+
+    res.json({
+      deals:     deals.slice(0, 30),
+      total:     deals.length,
+      tpEnabled: tpConfigured(),
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("[deals] Error:", err.message);
+    res.status(500).json({ deals: [], error: err.message });
   }
-
-  deals.sort((a, b) => b.score.centsPerMile - a.score.centsPerMile);
-
-  res.json({
-    deals:     deals.slice(0, 30),
-    total:     deals.length,
-    tpEnabled: tpConfigured(),
-    updatedAt: new Date().toISOString(),
-  });
 });
 
 export default router;

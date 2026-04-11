@@ -21,14 +21,23 @@ export function useBestDeals() {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/deals")
-      .then(r => r.json())
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    fetch("/api/deals", { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => {
         setDeals(d.deals ?? []);
         setUpdatedAt(d.updatedAt ?? null);
         setLoading(false);
       })
-      .catch(e => { setError(e.message); setLoading(false); });
+      .catch(e => {
+        if (e.name !== "AbortError") setError(e.message);
+        setLoading(false);
+      })
+      .finally(() => clearTimeout(timeout));
+
+    return () => { controller.abort(); clearTimeout(timeout); };
   }, []);
 
   return { deals, loading, error, updatedAt };

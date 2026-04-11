@@ -21,6 +21,7 @@ import destinationsRouter from "./server/routes/destinations.js";
 import dealsRouter from "./server/routes/deals.js";
 import waitlistRouter from "./server/routes/waitlist.js";
 import stripeRouter from "./server/routes/stripe.js";
+import authRouter from "./server/routes/auth.js";
 
 const app = express();
 app.use(compression());
@@ -127,6 +128,7 @@ app.use("/api/", (req, res, next) => {
 app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
 
 app.use(express.json());
+app.use("/api/auth",         authRouter);
 app.use("/api", flightsRouter);
 app.use("/api", affiliationRouter);
 app.use("/api/alerts",        alertsRouter);

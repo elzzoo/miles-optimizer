@@ -24,7 +24,7 @@ const meta = buildMeta({
 });
 
 export default function BestDeals() {
-  const { deals, loading, updatedAt } = useBestDeals();
+  const { deals, loading, error, updatedAt } = useBestDeals();
   const [allianceFilter, setAllianceFilter] = useState("Tous");
   const [sortBy, setSortBy] = useState<"score" | "savings" | "miles">("score");
   const FREE_LIMIT = 6;
@@ -105,6 +105,15 @@ export default function BestDeals() {
         {loading ? (
           <div className="space-y-3">
             <Skeleton variant="card" count={6} />
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 rounded-2xl border border-red-200 p-8 text-center">
+            <p className="text-2xl mb-3">⚠️</p>
+            <p className="font-semibold text-red-700 mb-2">Erreur de chargement</p>
+            <p className="text-red-500 text-sm mb-4">Les deals n'ont pas pu être chargés. Réessayez dans quelques secondes.</p>
+            <button onClick={() => window.location.reload()} className="text-xs text-primary font-semibold hover:underline">
+              Réessayer
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-slate-50 rounded-2xl border border-slate-200 p-10 text-center">

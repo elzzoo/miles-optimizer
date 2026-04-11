@@ -1,65 +1,88 @@
-import { useState, useEffect, createContext, useContext } from "react";
-import { createClient, User, Session } from "@supabase/supabase-js";
+import { useState, useEffect } from "react";
 
-declare const __SUPABASE_URL__: string;
-declare const __SUPABASE_ANON_KEY__: string;
-
-const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || (typeof __SUPABASE_URL__      !== "undefined" ? __SUPABASE_URL__      : "");
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || (typeof __SUPABASE_ANON_KEY__ !== "undefined" ? __SUPABASE_ANON_KEY__ : "");
-
-export const supabase = SUPABASE_URL
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+export interface AuthUser {
+  id: string;
+  email: string;
+  plan: "free" | "premium";
+}
 
 export interface AuthState {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
   loading: boolean;
   isPremium: boolean;
-  signIn: (email: string) => Promise<{ error: Error | null }>;
-  signOut: () => Promise<void>;
   token: string | null;
+  signIn: (email: string) => Promise<{ error: Error | null }>;
+  signOut: () => void;
+}
+
+const TOKEN_KEY = "mo_auth_token";
+
+function decodeJwt(token: string): AuthUser | null {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    if (payload.exp && Date.now() > payload.exp * 1000) return null;
+    return { id: payload.sub, email: payload.email, plan: payload.plan || "free" };
+  } catch { return null; }
 }
 
 export function useAuth(): AuthState {
-  const [user, setUser]       = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [token, setToken]   = useState<string | null>(null);
+  const [user, setUser]     = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase) { setLoading(false); return; }
+    // Check URL for auth_token (after magic link redirect)
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("auth_token");
+    if (urlToken) {
+      localStorage.setItem(TOKEN_KEY, urlToken);
+      // Clean URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth_token");
+      window.history.replaceState({}, "", url.toString());
+    }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, s) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    // Load token from storage
+    const stored = urlToken || localStorage.getItem(TOKEN_KEY);
+    if (stored) {
+      const decoded = decodeJwt(stored);
+      if (decoded) {
+        setToken(stored);
+        setUser(decoded);
+      } else {
+        localStorage.removeItem(TOKEN_KEY); // expired
+      }
+    }
+    setLoading(false);
   }, []);
 
-  const signIn = async (email: string) => {
-    if (!supabase) return { error: new Error("Auth not configured") };
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    });
-    return { error: error as Error | null };
+  const signIn = async (email: string): Promise<{ error: Error | null }> => {
+    try {
+      const res = await fetch("/api/auth/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erreur serveur");
+      return { error: null };
+    } catch (e: any) {
+      return { error: new Error(e.message) };
+    }
   };
 
-  const signOut = async () => {
-    if (supabase) await supabase.auth.signOut();
+  const signOut = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    setToken(null);
     setUser(null);
-    setSession(null);
   };
 
-  const isPremium = user?.user_metadata?.plan === "premium";
-  const token = session?.access_token ?? null;
-
-  return { user, session, loading, isPremium, signIn, signOut, token };
+  return {
+    user,
+    loading,
+    isPremium: user?.plan === "premium",
+    token,
+    signIn,
+    signOut,
+  };
 }

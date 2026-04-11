@@ -35,7 +35,7 @@ export function scoreDeal({ program, milesNeeded, taxesUSD, cashPriceUSD }) {
   const savingsPct = Math.max(0, Math.round((savingsUSD / cashPriceUSD) * 100));
 
   return {
-    centsPerMile: Math.round(centsPerMile * 10) / 10,
+    centsPerMile: parseFloat((Math.round(centsPerMile * 100) / 100).toFixed(2)),
     label,
     color,
     savingsUSD,

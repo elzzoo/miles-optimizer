@@ -21,10 +21,10 @@ export default function Alerts() {
     setSending(true);
     setSignInError("");
     try {
-      const res = await fetch("/api/waitlist", {
+      const res = await fetch("/api/auth/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "alerts" }),
+        body: JSON.stringify({ email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erreur serveur");
@@ -51,8 +51,8 @@ export default function Alerts() {
           {sent ? (
             <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
               <div className="text-3xl mb-3">✉️</div>
-              <h3 className="font-bold text-green-800 mb-2">Inscription enregistrée !</h3>
-              <p className="text-green-700 text-sm">Tu seras alerté(e) dès qu'un deal correspond à ta route.</p>
+              <h3 className="font-bold text-green-800 mb-2">✅ Lien envoyé ! Vérifiez votre boîte mail.</h3>
+              <p className="text-green-700 text-sm">Cliquez sur le lien dans l'email pour vous connecter et créer vos alertes.</p>
             </div>
           ) : (
             <form onSubmit={handleSignIn} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">

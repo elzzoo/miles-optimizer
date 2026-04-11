@@ -115,7 +115,7 @@ export default function Search() {
   const [searched,     setSearched]     = useState(false);
   const [selectedIdx,  setSelectedIdx]  = useState<number | null>(null);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
-const { isPremium } = useAuth();
+  const { isPremium, loading: authLoading } = useAuth();
     const quota = useSearchQuota(isPremium);
 
   // Redirect to home if no destination
@@ -236,7 +236,7 @@ const { isPremium } = useAuth();
             )}
 
             {/* Freemium quota */}
-{!isPremium && <PaywallBanner remaining={quota.remaining} limit={quota.limit} />}
+        {!authLoading && !isPremium && <PaywallBanner remaining={quota.remaining} limit={quota.limit} />}
 
             {/* Loading skeletons */}
             {!quota.exhausted && loading && <Skeleton variant="card" count={3} />}

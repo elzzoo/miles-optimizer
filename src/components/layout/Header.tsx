@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSearchQuota } from "../../hooks/useSearchQuota";
+import { useAuth } from "../../hooks/useAuth";
+import AuthButton from "./AuthButton";
 
 const NAV = [
   { to: "/best-deals",  label: "Meilleurs deals" },
@@ -13,6 +15,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const quota = useSearchQuota();
+  const { user, isPremium } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
@@ -80,12 +83,17 @@ export default function Header() {
             </Link>
           )}
 
-          <Link
-            to="/premium"
-            className="hidden md:flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#1D4ED8] transition-colors shadow-sm"
-          >
-            ⭐ Premium
-          </Link>
+          {/* Bouton Premium — masqué si déjà premium */}
+          {!isPremium && (
+            <Link
+              to="/premium"
+              className="hidden md:flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-[#1D4ED8] transition-colors shadow-sm"
+            >
+              ⭐ Premium
+            </Link>
+          )}
+
+          <AuthButton />
 
           {/* Hamburger mobile */}
           <button
@@ -119,13 +127,19 @@ export default function Header() {
               {label}
             </Link>
           ))}
-          <Link
-            to="/premium"
-            onClick={() => setOpen(false)}
-            className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-primary bg-blue-50 mt-2"
-          >
-            ⭐ Passer Premium
-          </Link>
+          {!isPremium && (
+            <Link
+              to="/premium"
+              onClick={() => setOpen(false)}
+              className="block px-3 py-2.5 rounded-xl text-sm font-semibold text-primary bg-blue-50 mt-2"
+            >
+              ⭐ Passer Premium
+            </Link>
+          )}
+          {/* Auth dans le menu mobile */}
+          <div className="pt-2 border-t border-slate-100 mt-2">
+            <AuthButton />
+          </div>
         </div>
       )}
     </header>

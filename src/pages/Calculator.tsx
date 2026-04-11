@@ -49,7 +49,7 @@ export default function Calculator() {
       <Helmet>
         <title>Calculateur cash vs miles | Miles Optimizer</title>
         <meta name="description" content="Calculez la valeur de vos miles en cents par mile. Comparez cash et miles pour votre prochain vol." />
-        <link rel="canonical" href="https://miles-optimizer-next.onrender.com/calculator" />
+        <link rel="canonical" href="https://miles-optimizer-next-3y3m.onrender.com/calculator" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-4 py-10">
@@ -183,7 +183,7 @@ export default function Calculator() {
                   <span>Prix cash</span><span className="font-medium">{cashPrice}$</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Coût acquisition miles ({program.pricePMile * 100}¢/mile)</span>
+                  <span>Coût acquisition miles ({(program.pricePMile * 100).toFixed(2)}¢/mile)</span>
                   <span className="font-medium">~{Math.round(Number(miles) * program.pricePMile)}$</span>
                 </div>
                 <div className="flex justify-between">

@@ -124,7 +124,7 @@ export default function RouteGuide() {
         <Helmet>
           <title>{routeData.title} | Miles Optimizer</title>
           <meta name="description" content={routeData.desc} />
-          <link rel="canonical" href={`https://miles-optimizer-next.onrender.com/${slug}`} />
+          <link rel="canonical" href={`https://miles-optimizer-next-3y3m.onrender.com/${slug}`} />
         </Helmet>
 
         <div className="max-w-3xl mx-auto px-4 py-12">

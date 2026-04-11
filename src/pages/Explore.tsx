@@ -33,7 +33,7 @@ export default function Explore() {
       <Helmet>
         <title>Explorer les destinations | Miles Optimizer</title>
         <meta name="description" content="Explorez toutes les destinations accessibles en miles depuis votre aéroport. Où puis-je aller avec mes miles ?" />
-        <link rel="canonical" href="https://miles-optimizer-next.onrender.com/explore" />
+        <link rel="canonical" href="https://miles-optimizer-next-3y3m.onrender.com/explore" />
       </Helmet>
 
       <div className="max-w-6xl mx-auto px-4 py-10">

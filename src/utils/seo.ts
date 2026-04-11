@@ -5,7 +5,7 @@ export interface SeoMeta {
   ogImage?: string;
 }
 
-const BASE_URL = "https://miles-optimizer-next.onrender.com";
+const BASE_URL = "https://miles-optimizer-next-3y3m.onrender.com";
 const DEFAULT_OG = `${BASE_URL}/og-image.png`;
 
 export function buildMeta(meta: Partial<SeoMeta> & { title: string }): SeoMeta {

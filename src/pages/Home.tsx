@@ -51,7 +51,7 @@ export default function Home() {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card"        content="summary_large_image" />
         <meta name="twitter:image"       content="/og-image.png" />
-        <link rel="canonical" href="https://miles-optimizer-next.onrender.com/" />
+        <link rel="canonical" href="https://miles-optimizer-next-3y3m.onrender.com/" />
       </Helmet>
 
       {/* ── HERO ─────────────────────────────────────────────── */}

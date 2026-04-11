@@ -59,6 +59,6 @@ services:
       - key: OPENTRIPMAP_KEY
         value: "5ae2e3f221c38a28845f05b6880de920326a8fac233d8009e07c4de8"
       - key: PLAUSIBLE_DOMAIN
-        value: "miles-optimizer-next.onrender.com"
+        value: "miles-optimizer-next-3y3m.onrender.com"
       - key: APP_URL
-        value: "https://miles-optimizer-next.onrender.com"
+        value: "https://miles-optimizer-next-3y3m.onrender.com"

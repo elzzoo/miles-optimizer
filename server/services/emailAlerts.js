@@ -5,7 +5,7 @@ export const isResendConfigured = !!RESEND_API_KEY;
 
 const resend = isResendConfigured ? new Resend(RESEND_API_KEY) : null;
 const FROM   = "Miles Optimizer <alerts@milesoptimizer.com>";
-const BASE_URL = process.env.APP_URL || "https://miles-optimizer-next.onrender.com";
+const BASE_URL = process.env.APP_URL || "https://miles-optimizer-next-3y3m.onrender.com";
 
 function scoreColor(label) {
   const map = { "Excellent": "#22C55E", "Très bon": "#22C55E", "Bon": "#2563EB", "Correct": "#F59E0B", "Faible": "#EF4444" };

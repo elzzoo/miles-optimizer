@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://miles-optimizer-next.onrender.com/sitemap.xml
+Sitemap: https://miles-optimizer-next-3y3m.onrender.com/sitemap.xml

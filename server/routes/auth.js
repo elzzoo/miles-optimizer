@@ -146,4 +146,58 @@ export function optionalAuth(req, res, next) {
   next();
 }
 
+// GET /api/auth/dev-login?email=xxx&secret=DEV_SECRET
+// Connexion directe sans email — pour tester les comptes premium en dev/staging
+router.get("/dev-login", async (req, res) => {
+  const DEV_SECRET = process.env.DEV_LOGIN_SECRET;
+  if (!DEV_SECRET) {
+    return res.status(403).json({ error: "DEV_LOGIN_SECRET non configuré" });
+  }
+  const { email, secret } = req.query;
+  if (!secret || secret !== DEV_SECRET) {
+    return res.status(403).json({ error: "Clé invalide" });
+  }
+  if (!email || !String(email).includes("@")) {
+    return res.status(400).json({ error: "Email manquant" });
+  }
+
+  const clean = String(email).trim().toLowerCase();
+
+  // Récupérer le plan depuis Supabase si disponible, sinon 'free'
+  let plan = "free";
+  if (isSupabaseConfigured) {
+    const { data: user } = await supabaseAdmin
+      .from("users")
+      .select("id, plan")
+      .eq("email", clean)
+      .maybeSingle();
+    if (user) {
+      plan = user.plan;
+    } else {
+      // Créer l'utilisateur s'il n'existe pas
+      const { data: newUser } = await supabaseAdmin
+        .from("users")
+        .insert({ email: clean })
+        .select()
+        .single();
+      plan = newUser?.plan || "free";
+    }
+  }
+
+  const { data: dbUser } = isSupabaseConfigured
+    ? await supabaseAdmin.from("users").select("id").eq("email", clean).maybeSingle()
+    : { data: null };
+
+  const userId = dbUser?.id || clean;
+
+  const token = jwt.sign(
+    { sub: userId, email: clean, plan },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+
+  // Redirige vers l'app avec le token (même flow que le magic link)
+  res.redirect(`${APP_URL}/?auth_token=${token}`);
+});
+
 export default router;

@@ -34,6 +34,26 @@ const SCORE_SIGNALS = [
   { words: ["miles", "points", "avios", "award"],                     score: 1 },
 ];
 
+// Decode common HTML entities in RSS text
+function decodeHtmlEntities(str) {
+  if (!str) return str;
+  return str
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&amp;/g,   "&")
+    .replace(/&lt;/g,    "<")
+    .replace(/&gt;/g,    ">")
+    .replace(/&quot;/g,  '"')
+    .replace(/&apos;/g,  "'")
+    .replace(/&nbsp;/g,  " ")
+    .replace(/&ndash;/g, "–")
+    .replace(/&mdash;/g, "—")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rdquo;/g, '"')
+    .replace(/&ldquo;/g, '"');
+}
+
 // Extract text content of an XML tag, handling CDATA and attributes
 function extractTag(xml, tag) {
   // Try CDATA and regular content
@@ -105,13 +125,14 @@ function parseRss(xml, sourceName) {
   let m;
   while ((m = itemRe.exec(xml)) !== null && items.length < 15) {
     const block = m[1];
-    const title = extractTag(block, "title");
-    if (!title) continue;
+    const rawTitle = extractTag(block, "title");
+    if (!rawTitle) continue;
+    const title = decodeHtmlEntities(rawTitle);
 
     const link = extractLink(block);
     const pubDate = extractTag(block, "pubDate");
     const raw = extractTag(block, "description");
-    const snippet = raw.replace(/<[^>]+>/g, "").slice(0, 120).trim();
+    const snippet = decodeHtmlEntities(raw.replace(/<[^>]+>/g, "").slice(0, 120).trim());
 
     items.push({ title, link, date: pubDate, dateTs: parsePubDate(pubDate), snippet, source: sourceName });
   }

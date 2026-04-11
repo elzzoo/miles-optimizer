@@ -21,7 +21,7 @@ export default function DealScore({ score, showDetails = false, size = "md" }: P
         </span>
       </div>
 
-      {showDetails && score.savingsUSD > 0 && (
+      {showDetails && score.savingsUSD >= 10 && score.savingsPct >= 2 && (
         <div className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 flex-shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-4-6h8" />

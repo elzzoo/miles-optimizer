@@ -27,6 +27,38 @@ body {
   margin: 0;
 }
 
+/* ── react-day-picker overrides ───────────────────────────── */
+.rdp-custom .rdp-root {
+  --rdp-accent-color: #2563EB;
+  --rdp-accent-background-color: #EFF6FF;
+  font-family: inherit;
+  padding: 12px;
+}
+.rdp-custom .rdp-day_button {
+  border-radius: 8px;
+  font-size: 13px;
+  width: 34px;
+  height: 34px;
+}
+.rdp-custom .rdp-selected .rdp-day_button {
+  background: #2563EB;
+  color: #fff;
+  font-weight: 700;
+}
+.rdp-custom .rdp-today:not(.rdp-selected) .rdp-day_button {
+  color: #2563EB;
+  font-weight: 700;
+}
+.rdp-custom .rdp-nav_button {
+  border-radius: 8px;
+}
+.rdp-custom .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F172A;
+  text-transform: capitalize;
+}
+
 /* ── Utilities ────────────────────────────────────────────── */
 .scrollbar-none {
   -ms-overflow-style: none;

@@ -92,7 +92,7 @@ export default function AirportPicker({ label, value, onChange, exclude, lang = 
             </div>
           </>
         ) : (
-          <span className="text-slate-400 text-sm">Sélectionner…</span>
+          <span className="text-slate-400 text-sm">Ex: Paris, CDG, New York…</span>
         )}
       </div>
       {open && <Dropdown ref={inputRef} filtered={filtered} q={q} setQ={setQ} lang={lang} onChange={v => { onChange(v); setOpen(false); }} onClose={() => setOpen(false)} />}

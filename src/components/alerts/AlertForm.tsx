@@ -4,11 +4,13 @@ import Button from "../../design/components/Button";
 interface Props {
   onSubmit: (data: { origin: string; destination: string; max_miles: number; cabin: number }) => Promise<void>;
   isPremium: boolean;
+  defaultOrigin?: string;
+  defaultDest?: string;
 }
 
-export default function AlertForm({ onSubmit, isPremium }: Props) {
-  const [origin, setOrigin]           = useState("DSS");
-  const [destination, setDestination] = useState("");
+export default function AlertForm({ onSubmit, isPremium, defaultOrigin = "DSS", defaultDest = "" }: Props) {
+  const [origin, setOrigin]           = useState(defaultOrigin);
+  const [destination, setDestination] = useState(defaultDest);
   const [maxMiles, setMaxMiles]       = useState("50000");
   const [cabin, setCabin]             = useState(0);
   const [loading, setLoading]         = useState(false);

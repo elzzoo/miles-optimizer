@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useSearchQuota } from "../../hooks/useSearchQuota";
 
 const NAV = [
   { to: "/best-deals",  label: "Meilleurs deals" },
@@ -11,6 +12,7 @@ const NAV = [
 export default function Header() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const quota = useSearchQuota();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
@@ -56,6 +58,18 @@ export default function Header() {
             </svg>
             Rechercher
           </button>
+
+          {/* Search quota pill */}
+          {!quota.exhausted ? (
+            <span className="hidden md:flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+              {quota.remaining} recherche{quota.remaining > 1 ? "s" : ""} gratuite{quota.remaining > 1 ? "s" : ""}
+            </span>
+          ) : (
+            <Link to="/premium" className="hidden md:flex items-center gap-1 text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full font-semibold hover:bg-amber-100 transition-colors">
+              Quota atteint · Premium →
+            </Link>
+          )}
 
           <Link
             to="/premium"

@@ -17,6 +17,7 @@ import DealScore from "../components/miles/DealScore";
 import { scoreDeal } from "../utils/scoring";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useSearchQuota } from "../hooks/useSearchQuota";
+import { saveRecentSearch } from "../hooks/useRecentSearches";
 import PaywallBanner from "../components/search/PaywallBanner";
 
 function Spinner() {
@@ -106,6 +107,7 @@ export default function Search() {
       setSearched(true);
       quota.increment();
       trackSearch(urlOrigin, urlDest, urlCabin);
+      saveRecentSearch(p);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -142,7 +144,7 @@ export default function Search() {
       {/* Compact search bar */}
       <div className="bg-white border-b border-slate-100 py-4 px-4">
         <div className="max-w-3xl mx-auto">
-          <SearchForm onSearch={handleSearch} variant="compact" defaultOrigin={urlOrigin} defaultDest={urlDest} />
+          <SearchForm onSearch={handleSearch} variant="compact" defaultOrigin={urlOrigin} defaultDest={urlDest} defaultDepDate={urlDep} defaultRetDate={urlRet || undefined} />
         </div>
       </div>
 
@@ -283,6 +285,14 @@ export default function Search() {
               )}
             </div>
 
+            {/* ¢/mile legend */}
+            <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+              <span className="text-green-600 font-semibold">≥ 2,5¢ Excellent</span>
+              {" · "}<span className="text-green-500 font-semibold">1,8–2,5¢ Très bon</span>
+              {" · "}<span className="text-blue-500 font-semibold">1,2–1,8¢ Bon</span>
+              {" · "}<span className="text-slate-400">{"< 1,2¢ Faible"}</span>
+            </p>
+
             {/* Miles programs */}
             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
               {milesResults.length} programmes comparés
@@ -330,6 +340,16 @@ export default function Search() {
                 );
               })}
             </div>
+
+            {/* Alert CTA */}
+            {urlDest && (
+              <a
+                href={`/alerts?origin=${urlOrigin}&dest=${urlDest}`}
+                className="mt-4 flex items-center justify-center gap-2 w-full text-xs font-semibold text-slate-600 border border-slate-200 rounded-xl py-2.5 hover:border-primary hover:text-primary hover:bg-blue-50 transition-all"
+              >
+                🔔 M'alerter pour cette route
+              </a>
+            )}
 
             <p className="text-[10px] text-slate-400 mt-3 text-center">
               Miles calculés sur base des grilles tarifaires publiées. Taxes et surcarburant non inclus.

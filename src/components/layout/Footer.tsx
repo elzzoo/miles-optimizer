@@ -72,10 +72,14 @@ export default function Footer() {
 
         <div className="border-t border-slate-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
           <p>© 2026 Miles Optimizer. Comparateur de vols cash vs miles.</p>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap justify-center md:justify-end">
             <Link to="/premium" className="text-primary hover:text-blue-400 transition-colors font-medium">⭐ Premium</Link>
             <span className="text-slate-700">·</span>
             <span>Données non contractuelles</span>
+            <span className="text-slate-700">·</span>
+            <Link to="/mentions-legales" className="hover:text-white transition-colors">Mentions légales</Link>
+            <span className="text-slate-700">·</span>
+            <Link to="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
           </div>
         </div>
       </div>

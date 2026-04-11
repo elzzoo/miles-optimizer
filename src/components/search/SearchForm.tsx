@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import AirportPicker from "../AirportPicker";
-import DateInput from "../DateInput";
+import DatePicker from "../DatePicker";
 import { today, addDays } from "../../utils/dates";
 import { useAnalytics } from "../../hooks/useAnalytics";
 
@@ -9,20 +9,22 @@ interface Props {
   variant?: "hero" | "compact";
   defaultOrigin?: string;
   defaultDest?: string;
+  defaultDepDate?: string;
+  defaultRetDate?: string;
   onOriginChange?: (iata: string) => void;
 }
 
 type TripType = "round" | "oneway";
 type Cabin    = 0 | 1;
 
-export default function SearchForm({ onSearch, variant = "hero", defaultOrigin = "DSS", defaultDest = "", onOriginChange }: Props) {
+export default function SearchForm({ onSearch, variant = "hero", defaultOrigin = "DSS", defaultDest = "", defaultDepDate, defaultRetDate, onOriginChange }: Props) {
   const [origin, setOrigin]       = useState(defaultOrigin);
   const [dest, setDest]           = useState(defaultDest);
-  const [tripType, setTripType]   = useState<TripType>("round");
+  const [tripType, setTripType]   = useState<TripType>(defaultRetDate ? "round" : "round");
   const [cabin, setCabin]         = useState<Cabin>(0);
   const [passengers, setPassengers] = useState(1);
-  const [depDate, setDepDate]     = useState(() => addDays(today, 30));
-  const [retDate, setRetDate]     = useState(() => addDays(today, 40));
+  const [depDate, setDepDate]     = useState(() => defaultDepDate || addDays(today, 30));
+  const [retDate, setRetDate]     = useState(() => defaultRetDate || addDays(today, 40));
   const [lang] = useState("fr");
 
   const { trackSearch } = useAnalytics();
@@ -144,7 +146,7 @@ export default function SearchForm({ onSearch, variant = "hero", defaultOrigin =
 
       {/* Dates */}
       <div className={`grid gap-3 mb-4 ${isOneWay ? "grid-cols-1" : "grid-cols-2"}`}>
-        <DateInput
+        <DatePicker
           label="Départ"
           value={depDate}
           min={addDays(today, 0)}
@@ -157,7 +159,7 @@ export default function SearchForm({ onSearch, variant = "hero", defaultOrigin =
           ]}
         />
         {!isOneWay && (
-          <DateInput
+          <DatePicker
             label="Retour"
             value={retDate}
             min={addDays(depDate, 1)}

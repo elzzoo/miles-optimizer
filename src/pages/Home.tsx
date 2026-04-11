@@ -7,6 +7,7 @@ import DealCard from "../components/deals/DealCard";
 import PromoBanner from "../components/promo/PromoBanner";
 import { useBestDeals } from "../hooks/useBestDeals";
 import { defaultMeta } from "../utils/seo";
+import { useRecentSearches } from "../hooks/useRecentSearches";
 
 const POPULAR_ROUTES = [
   { from: "DSS", to: "CDG", label: "Dakar → Paris" },
@@ -24,8 +25,9 @@ const HOW_IT_WORKS = [
 ];
 
 export default function Home() {
-  const navigate   = useNavigate();
-  const { deals }  = useBestDeals();
+  const navigate      = useNavigate();
+  const { deals }     = useBestDeals();
+  const recentSearches = useRecentSearches();
   const [origin, setOrigin] = useState("DSS");
 
   const handleSearch = useCallback((params: URLSearchParams) => {
@@ -79,8 +81,26 @@ export default function Home() {
 
           <SearchForm onSearch={handleSearch} variant="hero" defaultOrigin={origin} onOriginChange={setOrigin} />
 
+          {/* Recent searches */}
+          {recentSearches.length > 0 && (
+            <div className="mt-5">
+              <p className="text-xs text-slate-400 text-center mb-2">Récemment recherché :</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {recentSearches.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => navigate(`/search?${s.params}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 rounded-full text-xs text-primary font-medium hover:bg-blue-100 transition-all"
+                  >
+                    🕐 {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Popular routes */}
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
             {POPULAR_ROUTES.map(r => (
               <button
                 key={r.label}

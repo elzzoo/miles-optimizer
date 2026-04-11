@@ -27,9 +27,9 @@ export default function Calculator() {
   const allScores = useMemo(() =>
     PROGRAMS.map(p => ({
       program: p,
-      score: scoreDeal({ program: p, milesNeeded: Number(miles), taxesUSD: p.taxUSD, cashPriceUSD: Number(cashPrice) }),
+      score: scoreDeal({ program: p, milesNeeded: Number(miles), taxesUSD: Number(taxes), cashPriceUSD: Number(cashPrice) }),
     })).sort((a, b) => b.score.centsPerMile - a.score.centsPerMile)
-  , [miles, cashPrice]);
+  , [miles, cashPrice, taxes]);
 
   // Sync URL params so the share link works
   useEffect(() => {

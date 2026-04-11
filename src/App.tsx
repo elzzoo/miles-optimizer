@@ -9,12 +9,14 @@ import Home   from "./pages/Home";
 import Search from "./pages/Search";
 
 // Lazy (code splitting)
-const BestDeals  = lazy(() => import("./pages/BestDeals"));
-const Explore    = lazy(() => import("./pages/Explore"));
-const Alerts     = lazy(() => import("./pages/Alerts"));
-const Calculator = lazy(() => import("./pages/Calculator"));
-const Premium    = lazy(() => import("./pages/Premium"));
-const RouteGuide = lazy(() => import("./pages/seo/RouteGuide"));
+const BestDeals       = lazy(() => import("./pages/BestDeals"));
+const Explore         = lazy(() => import("./pages/Explore"));
+const Alerts          = lazy(() => import("./pages/Alerts"));
+const Calculator      = lazy(() => import("./pages/Calculator"));
+const Premium         = lazy(() => import("./pages/Premium"));
+const MentionsLegales = lazy(() => import("./pages/MentionsLegales"));
+const Confidentialite = lazy(() => import("./pages/Confidentialite"));
+const RouteGuide      = lazy(() => import("./pages/seo/RouteGuide"));
 
 function PageLoader() {
   return (
@@ -42,6 +44,10 @@ export default function App() {
               element={<Suspense fallback={<PageLoader />}><Calculator /></Suspense>} />
             <Route path="/premium"
               element={<Suspense fallback={<PageLoader />}><Premium /></Suspense>} />
+            <Route path="/mentions-legales"
+              element={<Suspense fallback={<PageLoader />}><MentionsLegales /></Suspense>} />
+            <Route path="/confidentialite"
+              element={<Suspense fallback={<PageLoader />}><Confidentialite /></Suspense>} />
             {/* SEO routes dynamiques — catch-all en dernier */}
             <Route path="/:slug"
               element={<Suspense fallback={<PageLoader />}><RouteGuide /></Suspense>} />

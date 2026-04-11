@@ -2,61 +2,51 @@ import { Helmet } from "react-helmet-async";
 import { useState } from "react";
 import { useAnalytics } from "../hooks/useAnalytics";
 
-const PLANS = [
+const TESTIMONIALS = [
   {
-    id: "free",
-    name: "Gratuit",
-    price: "0€",
-    period: "",
-    cta: "Continuer",
-    ctaHref: "/",
-    highlight: false,
-    features: [
-      { text: "5 recherches par jour",        ok: true },
-      { text: "6 meilleurs deals",             ok: true },
-      { text: "8 destinations explorées",      ok: true },
-      { text: "Calculateur miles",             ok: true },
-      { text: "Alertes prix",                  ok: false },
-      { text: "Deals illimités",               ok: false },
-      { text: "Filtres avancés",               ok: false },
-      { text: "Export résultats",              ok: false },
-    ],
+    initials: "M.D.",
+    color: "bg-blue-500",
+    name: "M.D.",
+    city: "Dakar",
+    quote: "J'ai économisé 340$ sur mon vol vers Paris grâce à LifeMiles. Jamais je n'aurais trouvé ça seul.",
+    savings: "340$",
   },
   {
-    id: "premium",
-    name: "Premium",
-    price: "9,90€",
-    period: "/mois",
-    cta: "Rejoindre la liste d'attente →",
-    ctaHref: "#waitlist",
-    highlight: true,
-    badge: "Le plus populaire",
-    features: [
-      { text: "Recherches illimitées",         ok: true },
-      { text: "Tous les deals (30+)",          ok: true },
-      { text: "Destinations illimitées",       ok: true },
-      { text: "Calculateur miles",             ok: true },
-      { text: "10 alertes prix par email",     ok: true },
-      { text: "Filtres avancés",               ok: true },
-      { text: "Priorité support",              ok: true },
-      { text: "Sans engagement",               ok: true },
-    ],
+    initials: "A.K.",
+    color: "bg-emerald-500",
+    name: "A.K.",
+    city: "Abidjan",
+    quote: "Le comparateur m'a montré que mes miles Aeroplan valaient 2,4¢ pour Dubai. J'ai réservé immédiatement.",
+    savings: "280$",
+  },
+  {
+    initials: "F.T.",
+    color: "bg-violet-500",
+    name: "F.T.",
+    city: "Casablanca",
+    quote: "Avant Miles Optimizer, je prenais juste le vol le moins cher. Maintenant je voyage en Business pour moins cher qu'en éco.",
+    savings: "520$",
   },
 ];
 
 const FAQ = [
   { q: "Comment fonctionne le paiement ?", a: "Les paiements sont traités de manière sécurisée via Stripe. Vous pouvez annuler à tout moment depuis votre espace." },
   { q: "Puis-je annuler à tout moment ?", a: "Oui, sans frais ni préavis. Votre accès reste actif jusqu'à la fin de la période payée." },
-  { q: "Les données sont-elles mises à jour en temps réel ?", a: "Les prix cash sont récupérés via Google Flights et Skyscanner. Les calculs miles sont mis à jour toutes les 12h." },
+  { q: "Les données sont-elles mises à jour en temps réel ?", a: "Les prix cash sont récupérés via Duffel, Aviasales et Google Flights. Les calculs miles sont mis à jour toutes les 12h." },
   { q: "Qu'est-ce qu'une alerte prix ?", a: "Une alerte vous envoie un email dès qu'un deal miles correspondant à votre route atteint un bon ratio valeur/mile." },
 ];
 
 export default function Premium() {
   const { trackUpgradeClick } = useAnalytics();
   const [waitlistEmail, setWaitlistEmail] = useState("");
-  const [waitlisted, setWaitlisted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [open, setOpen] = useState<number | null>(null);
+  const [waitlisted, setWaitlisted]       = useState(false);
+  const [submitting, setSubmitting]       = useState(false);
+  const [open, setOpen]                   = useState<number | null>(null);
+  const [billing, setBilling]             = useState<"annual" | "monthly">("annual");
+
+  const price    = billing === "annual" ? "6,58€" : "9,90€";
+  const period   = billing === "annual" ? "/mois · facturé 79€/an" : "/mois";
+  const savings  = billing === "annual" ? "Économisez 40%" : null;
 
   async function handleWaitlist(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +56,7 @@ export default function Premium() {
       await fetch("/api/waitlist", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: waitlistEmail }),
+        body: JSON.stringify({ email: waitlistEmail, billing }),
       });
     } catch {
       // best-effort; still show success
@@ -80,14 +70,14 @@ export default function Premium() {
     <>
       <Helmet>
         <title>Premium — Miles Optimizer</title>
-        <meta name="description" content="Débloquez Miles Optimizer Premium : alertes prix, deals illimités, filtres avancés. 9,90€/mois sans engagement." />
-        <link rel="canonical" href="https://miles-optimizer-next.onrender.com/premium" />
+        <meta name="description" content="Débloquez Miles Optimizer Premium : alertes prix, deals illimités, filtres avancés. À partir de 6,58€/mois." />
+        <link rel="canonical" href="https://miles-optimizer-next-3y3m.onrender.com/premium" />
       </Helmet>
 
       <div className="max-w-4xl mx-auto px-4 py-14">
 
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-10">
           <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">⭐ Premium</p>
           <h1 className="text-4xl font-black text-slate-900 mb-4">
             Le plein potentiel de<br />Miles Optimizer
@@ -97,59 +87,135 @@ export default function Premium() {
           </p>
         </div>
 
-        {/* Plans */}
-        <div className="grid md:grid-cols-2 gap-6 mb-16">
-          {PLANS.map((plan) => (
-            <div
-              key={plan.id}
-              className={`rounded-3xl border p-8 relative ${
-                plan.highlight
-                  ? "border-primary bg-primary/3 shadow-[0_0_0_1px_#2563EB22,0_8px_32px_rgba(37,99,235,.12)]"
-                  : "border-slate-200 bg-white"
+        {/* Billing toggle */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
+            <button
+              onClick={() => setBilling("annual")}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                billing === "annual"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
             >
-              {plan.badge && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="bg-primary text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm">
-                    {plan.badge}
+              Annuel
+              <span className="text-[10px] font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">-40%</span>
+            </button>
+            <button
+              onClick={() => setBilling("monthly")}
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                billing === "monthly"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Mensuel
+            </button>
+          </div>
+        </div>
+
+        {/* Plans */}
+        <div className="grid md:grid-cols-2 gap-6 mb-12">
+
+          {/* Free */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-8">
+            <h3 className="text-base font-bold text-slate-700 mb-1">Gratuit</h3>
+            <div className="flex items-end gap-1 mb-6">
+              <span className="text-4xl font-black text-slate-900">0€</span>
+            </div>
+            <ul className="space-y-3 mb-8">
+              {[
+                { text: "5 recherches par jour",   ok: true },
+                { text: "6 meilleurs deals",        ok: true },
+                { text: "8 destinations explorées", ok: true },
+                { text: "Calculateur miles",        ok: true },
+                { text: "Alertes prix",             ok: false },
+                { text: "Deals illimités",          ok: false },
+                { text: "Filtres avancés",          ok: false },
+                { text: "Export résultats",         ok: false },
+              ].map(f => (
+                <li key={f.text} className={`flex items-center gap-2.5 text-sm ${f.ok ? "text-slate-700" : "text-slate-400"}`}>
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${f.ok ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-400"}`}>
+                    {f.ok ? "✓" : "✕"}
+                  </span>
+                  {f.text}
+                </li>
+              ))}
+            </ul>
+            <a href="/" className="block w-full text-center py-3.5 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all">
+              Continuer
+            </a>
+          </div>
+
+          {/* Premium */}
+          <div className="rounded-3xl border border-primary bg-primary/3 shadow-[0_0_0_1px_#2563EB22,0_8px_32px_rgba(37,99,235,.12)] p-8 relative">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+              <span className="bg-primary text-white text-xs font-bold px-4 py-1 rounded-full shadow-sm">
+                Le plus populaire
+              </span>
+            </div>
+
+            <h3 className="text-base font-bold text-slate-700 mb-1">Premium</h3>
+            <div className="flex items-end gap-1 mb-1">
+              <span className="text-4xl font-black text-slate-900">{price}</span>
+              <span className="text-slate-400 text-sm mb-1">{period}</span>
+            </div>
+            {savings && (
+              <p className="text-xs font-bold text-green-600 mb-5">{savings}</p>
+            )}
+            {!savings && <div className="mb-5" />}
+
+            <ul className="space-y-3 mb-8">
+              {[
+                { text: "Recherches illimitées",     ok: true },
+                { text: "Tous les deals (30+)",      ok: true },
+                { text: "Destinations illimitées",   ok: true },
+                { text: "Calculateur miles",         ok: true },
+                { text: "10 alertes prix par email", ok: true },
+                { text: "Filtres avancés",           ok: true },
+                { text: "Priorité support",          ok: true },
+                { text: "Sans engagement",           ok: true },
+              ].map(f => (
+                <li key={f.text} className="flex items-center gap-2.5 text-sm text-slate-700">
+                  <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold bg-green-100 text-green-600">✓</span>
+                  {f.text}
+                </li>
+              ))}
+            </ul>
+
+            <a
+              href="#waitlist"
+              onClick={trackUpgradeClick}
+              className="block w-full text-center py-3.5 rounded-xl font-bold text-sm bg-primary text-white hover:bg-[#1D4ED8] shadow-sm transition-all"
+            >
+              Rejoindre la liste d'attente →
+            </a>
+          </div>
+        </div>
+
+        {/* Social proof */}
+        <div className="mb-14">
+          <h3 className="text-lg font-bold text-slate-900 text-center mb-6">Ils ont économisé avec Miles Optimizer</h3>
+          <div className="grid sm:grid-cols-3 gap-4">
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`w-9 h-9 rounded-full ${t.color} flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-white text-xs font-bold">{t.initials}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{t.name}</p>
+                    <p className="text-xs text-slate-400">{t.city}</p>
+                  </div>
+                  <span className="ml-auto text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                    -{t.savings}
                   </span>
                 </div>
-              )}
-
-              <div className="mb-6">
-                <h3 className="text-base font-bold text-slate-700 mb-1">{plan.name}</h3>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-black text-slate-900">{plan.price}</span>
-                  {plan.period && <span className="text-slate-400 text-sm mb-1">{plan.period}</span>}
-                </div>
+                <p className="text-xs text-slate-600 leading-relaxed italic">"{t.quote}"</p>
               </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((f) => (
-                  <li key={f.text} className={`flex items-center gap-2.5 text-sm ${f.ok ? "text-slate-700" : "text-slate-400"}`}>
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold ${
-                      f.ok ? "bg-green-100 text-green-600" : "bg-slate-100 text-slate-400"
-                    }`}>
-                      {f.ok ? "✓" : "✕"}
-                    </span>
-                    {f.text}
-                  </li>
-                ))}
-              </ul>
-
-              <a
-                href={plan.ctaHref}
-                onClick={() => plan.highlight && trackUpgradeClick()}
-                className={`block w-full text-center py-3.5 rounded-xl font-bold text-sm transition-all ${
-                  plan.highlight
-                    ? "bg-primary text-white hover:bg-[#1D4ED8] shadow-sm"
-                    : "border border-slate-200 text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {plan.cta}
-              </a>
-            </div>
-          ))}
+            ))}
+          </div>
+          <p className="text-[10px] text-slate-400 text-center mt-3">Témoignages à titre illustratif — données réelles à venir</p>
         </div>
 
         {/* Waitlist */}
@@ -172,7 +238,11 @@ export default function Premium() {
                 required
                 className="flex-1 px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              <button type="submit" disabled={submitting} className="bg-primary text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1D4ED8] transition-colors text-sm disabled:opacity-60">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-primary text-white font-semibold px-5 py-3 rounded-xl hover:bg-[#1D4ED8] transition-colors text-sm disabled:opacity-60"
+              >
                 {submitting ? "..." : "M'inscrire"}
               </button>
             </form>

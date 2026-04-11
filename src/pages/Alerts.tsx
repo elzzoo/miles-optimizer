@@ -1,12 +1,16 @@
 import { Helmet } from "react-helmet-async";
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useAlerts } from "../hooks/useAlerts";
 import AlertForm from "../components/alerts/AlertForm";
 
 export default function Alerts() {
+  const [searchParams] = useSearchParams();
   const { user, isPremium, signIn, token } = useAuth();
   const { alerts, loading, createAlert, deleteAlert, toggleAlert } = useAlerts(token);
+  const prefillOrigin = searchParams.get("origin") || undefined;
+  const prefillDest   = searchParams.get("dest")   || undefined;
   const [email, setEmail]   = useState("");
   const [sent, setSent]     = useState(false);
   const [sending, setSending] = useState(false);
@@ -148,6 +152,8 @@ export default function Alerts() {
             <AlertForm
               onSubmit={createAlert}
               isPremium={isPremium}
+              defaultOrigin={prefillOrigin}
+              defaultDest={prefillDest}
             />
           </div>
         </div>

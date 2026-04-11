@@ -20,6 +20,7 @@ import alertsRouter from "./server/routes/alerts.js";
 import destinationsRouter from "./server/routes/destinations.js";
 import dealsRouter from "./server/routes/deals.js";
 import waitlistRouter from "./server/routes/waitlist.js";
+import stripeRouter from "./server/routes/stripe.js";
 
 const app = express();
 app.use(compression());
@@ -94,12 +95,17 @@ app.use("/api/", (req, res, next) => {
   generalLimit(req, res, next);
 });
 
+// Stripe webhook needs raw body — must be before express.json()
+app.use("/api/stripe/webhook", express.raw({ type: "application/json" }));
+
+app.use(express.json());
 app.use("/api", flightsRouter);
 app.use("/api", affiliationRouter);
 app.use("/api/alerts",        alertsRouter);
 app.use("/api/destinations",  destinationsRouter);
 app.use("/api/deals",         dealsRouter);
 app.use("/api/waitlist",      waitlistRouter);
+app.use("/api/stripe",        stripeRouter);
 
 app.use(express.static(path.join(__dirname, "dist")));
 app.get("*", (req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
